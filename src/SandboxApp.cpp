@@ -1,7 +1,6 @@
 #include <Base.h>
 #include <Tabby.h>
 
-// #include "ExampleLayer.h"
 #include "Sandbox2D.h"
 
 class Sandbox : public Tabby::Application {
@@ -9,22 +8,25 @@ public:
     Sandbox(const Tabby::ApplicationSpecification& specification)
         : Tabby::Application(specification)
     {
-        // PushLayer(new Sandbox2D());
         PushLayer(new Base());
     }
 
-    ~Sandbox()
-    {
-    }
+    ~Sandbox() { }
 };
 
-Tabby::Application* Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
+Tabby::Application*
+Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
 {
     ApplicationSpecification spec;
     spec.Name = "A winfow";
     spec.WorkingDirectory = "assets";
     spec.CommandLineArgs = args;
-    spec.maxFPS = 0.0f;
+    spec.Width = 1980;
+    spec.Height = 1080;
+    spec.MinWidth = 198;
+    spec.MinHeight = 108;
+    spec.VSync = false;
+    spec.MaxFPS = 120.0f;
 
     return new Sandbox(spec);
 }
