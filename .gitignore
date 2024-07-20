@@ -1,32 +1,19 @@
-# Prerequisites
-*.d
+.idea/
+build/
+build-release/
+build-debug/
+build-native/
+build-macos/
+build-linux/
+build-windows/
+build-emscripten/
+build-web/
+android/app/.cxx
+android/app/build
+.cache/
+Editor/
+.vscode/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+CMakeLists.txt.user
+*.DS_Store
