@@ -27,6 +27,7 @@ Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
     spec.MinHeight = 108;
     spec.VSync = false;
     spec.MaxFPS = 120.0f;
+    spec.RendererAPI = ApplicationSpecification::RendererAPI::OpenGL46;
 
     return new Sandbox(spec);
 }
