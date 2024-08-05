@@ -3,6 +3,8 @@
 
 #include "Sandbox2D.h"
 
+namespace App {
+
 class Sandbox : public Tabby::Application {
 public:
     Sandbox(const Tabby::ApplicationSpecification& specification)
@@ -14,8 +16,9 @@ public:
     ~Sandbox() { }
 };
 
-Tabby::Application*
-Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
+}
+
+Tabby::Application* Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
 {
     ApplicationSpecification spec;
     spec.Name = "A winfow";
@@ -29,7 +32,7 @@ Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs args)
     spec.MaxFPS = 120.0f;
     spec.RendererAPI = ApplicationSpecification::RendererAPI::OpenGL46;
 
-    return new Sandbox(spec);
+    return new App::Sandbox(spec);
 }
 
 #include <Tabby/Core/EntryPoint.h>

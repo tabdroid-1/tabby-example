@@ -78,7 +78,7 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::EndTable();
             }
 
-            glm::mat4 transform = m_Entity.GetComponent<TransformComponent>().GetTransform();
+            Matrix4 transform = m_Entity.GetComponent<TransformComponent>().GetTransform();
             auto& trs_component = m_Entity.GetComponent<TransformComponent>();
 
             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 5.0f });
@@ -89,7 +89,7 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatT", glm::value_ptr((glm::vec3&)trs_component.Translation), 0.1f);
+                ImGui::DragFloat3("##floatT", glm::value_ptr((Tabby::Vector3&)trs_component.Translation), 0.1f);
                 // if (ImGui::DragFloat3("##floatT", glm::value_ptr(trs_component.Translation), 0.1f))
                 //     transform = Utils::ComposeMatrix(trs_component.Translation, trs_component.Rotation, trs_component.Scale);
 
@@ -99,7 +99,7 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatR", glm::value_ptr((glm::vec3&)trs_component.Rotation), 0.1f);
+                ImGui::DragFloat3("##floatR", glm::value_ptr((Tabby::Vector3&)trs_component.Rotation), 0.1f);
                 // if (ImGui::DragFloat3("##floatR", glm::value_ptr(trs_component.rotation), 0.1f))
                 //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
 
@@ -109,10 +109,39 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatS", glm::value_ptr((glm::vec3&)trs_component.Scale), 0.01f);
+                ImGui::DragFloat3("##floatS", glm::value_ptr((Tabby::Vector3&)trs_component.Scale), 0.01f);
                 // if (ImGui::DragFloat3("##floatS", glm::value_ptr(trs_component.scale), 0.01f))
                 //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
 
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("Local Translation");
+                ImGui::SameLine();
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::DragFloat3("##floatT", glm::value_ptr((Tabby::Vector3&)trs_component.LocalTranslation), 0.1f);
+                // if (ImGui::DragFloat3("##floatT", glm::value_ptr(trs_component.Translation), 0.1f))
+                //     transform = Utils::ComposeMatrix(trs_component.Translation, trs_component.Rotation, trs_component.Scale);
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("Local Rotation");
+                ImGui::SameLine();
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::DragFloat3("##floatR", glm::value_ptr((Tabby::Vector3&)trs_component.LocalRotation), 0.1f);
+                // if (ImGui::DragFloat3("##floatR", glm::value_ptr(trs_component.rotation), 0.1f))
+                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("Local Scale");
+                ImGui::SameLine();
+                ImGui::TableNextColumn();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::DragFloat3("##floatS", glm::value_ptr((Tabby::Vector3&)trs_component.LocalScale), 0.01f);
+                // if (ImGui::DragFloat3("##floatS", glm::value_ptr(trs_component.scale), 0.01f))
+                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
                 ImGui::EndTable();
             }
             ImGui::PopStyleVar();
@@ -166,7 +195,7 @@ void PropertiesPanel::OnImGuiRender()
 
                                     // m_Context->GetRenderer()->AcquireTextureIndex(AssetManager::Get()->GetTexture(sc.texture), SamplerFilteringMode::NEAREST);
                                     // uvec3 texture_resolution = AssetManager::Get()->GetTexture(sc.texture)->GetSpecification().extent;
-                                    // sc.aspect_ratio = { (float32)texture_resolution.x / (float32)texture_resolution.y };
+                                    // sc.aspect_ratio = { (float)texture_resolution.x / (float)texture_resolution.y };
                                 }
                             };
 
@@ -247,7 +276,7 @@ void PropertiesPanel::OnImGuiRender()
                                 ImGui::Text("Field of view");
 
                                 ImGui::TableNextColumn();
-                                static float32 fov = camera_component.Camera.GetPerspectiveVerticalFOV();
+                                static float fov = camera_component.Camera.GetPerspectiveVerticalFOV();
                                 if (ImGui::SliderAngle("##", &fov, 30.0f, 160.0f))
                                     camera_component.Camera.SetPerspectiveVerticalFOV(fov);
 
@@ -258,7 +287,7 @@ void PropertiesPanel::OnImGuiRender()
                                 ImGui::Text("Scale");
 
                                 ImGui::TableNextColumn();
-                                static float32 orthographics_scale = camera_component.Camera.GetOrthographicSize();
+                                static float orthographics_scale = camera_component.Camera.GetOrthographicSize();
                                 if (ImGui::DragFloat("##", &orthographics_scale, 0.01f, 0.01f, FLT_MAX))
                                     camera_component.Camera.SetOrthographicSize(orthographics_scale);
                             }
@@ -376,7 +405,7 @@ void PropertiesPanel::OnImGuiRender()
                             ImGui::Text("Size");
                             ImGui::TableNextColumn();
                             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                            if (ImGui::DragFloat3("##box_collider_size_property", (float32*)&box_collider_component.Size, 0.01f, 0.01f, FLT_MAX)) {
+                            if (ImGui::DragFloat3("##box_collider_size_property", (float*)&box_collider_component.Size, 0.01f, 0.01f, FLT_MAX)) {
                                 if (box_collider_component.Size.x < 0.0f)
                                     box_collider_component.Size.x = 0.01f;
                                 if (box_collider_component.Size.y < 0.0f)
@@ -431,7 +460,7 @@ void PropertiesPanel::OnImGuiRender()
                             ImGui::Text("Radius");
                             ImGui::TableNextColumn();
                             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                            if (ImGui::DragFloat("##sphere_collider_size_property", (float32*)&sphere_collider_component.Radius, 0.01f, 0.01f, FLT_MAX))
+                            if (ImGui::DragFloat("##sphere_collider_size_property", (float*)&sphere_collider_component.Radius, 0.01f, 0.01f, FLT_MAX))
                                 if (sphere_collider_component.Radius < 0.0f)
                                     sphere_collider_component.Radius = 0.01f;
 

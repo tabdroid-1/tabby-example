@@ -23,6 +23,7 @@ file(GLOB_RECURSE PROJECT_SOURCES
         )
 
 list(APPEND PROJECT_SOURCES
+        ${PROJECT_VENDOR_DIR}/tinyobjloader/tinyobjloader.cpp
         )
 
 
@@ -35,6 +36,7 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SRC_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_ASSETS_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_VENDOR_DIR}/tabby/src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_VENDOR_DIR}/tinyobjloader)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_VENDOR_DIR}/tabby/vendor/box2c/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_VENDOR_DIR}/tabby/vendor/spdlog/include)
 

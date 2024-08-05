@@ -4,6 +4,8 @@
 #include <Panels/SceneHierarchyPanel/SceneHierarchyPanel.h>
 #include <Panels/SceneHierarchyPanel/Properties.h>
 
+namespace App {
+
 class Base : public Tabby::Layer {
 public:
     Base();
@@ -12,7 +14,7 @@ public:
     virtual void OnAttach() override;
     virtual void OnDetach() override;
 
-    void OnUpdate(Tabby::Timestep ts) override;
+    void OnUpdate() override;
     virtual void OnImGuiRender() override;
     void OnEvent(Tabby::Event& e) override;
 
@@ -25,7 +27,9 @@ private:
     int m_GizmoType = -1;
 
     Tabby::Shared<Tabby::Framebuffer> m_Framebuffer;
-    glm::vec2 m_ViewportSize = { 1280.0f, 720.0f };
-    glm::vec2 m_ViewportBounds[2];
+    Tabby::Vector2 m_ViewportSize = { 1280.0f, 720.0f };
+    Tabby::Vector2 m_ViewportBounds[2];
     bool m_ViewportFocused = false, m_ViewportHovered = false;
 };
+
+}
