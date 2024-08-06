@@ -1,10 +1,11 @@
 #include "Base.h"
+#include <MapLoader.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <ImGuizmo.h>
-#include <CustomComponent/PlayerComponent.h>
+#include <CustomComponent/Components.h>
 
 static Tabby::Shared<Tabby::Font> s_Font;
 float fps = 0;
@@ -29,8 +30,6 @@ void Base::OnAttach()
     fbSpec.Width = 2560;
     fbSpec.Height = 1600;
     m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
-
-    Tabby::World::AddPlugins<PlayerPlugin>();
 
     Tabby::World::OnStart();
 
@@ -60,7 +59,7 @@ void Base::OnAttach()
         DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 10;
     }
 
-    Tabby::GLTF gltf("scenes/test_map.gltf");
+    MapLoader::Parse("scenes/test_map.gltf");
 }
 
 void Base::OnDetach()
@@ -73,7 +72,6 @@ void Base::OnDetach()
 void Base::OnUpdate()
 {
 
-    // TB_INFO("{0}", fps);
     Tabby::World::OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
     if (Tabby::FramebufferSpecification spec = m_Framebuffer->GetSpecification();
@@ -91,14 +89,13 @@ void Base::OnUpdate()
         Tabby::RenderCommand::Clear();
     }
 
-    // BROKEN:
+    // BROKEN?
     // m_Framebuffer->ClearAttachment(1, -1);
 
     Tabby::World::Update();
     OnOverlayRender();
 
     m_Framebuffer->Unbind();
-    // tracy::QueueType::FrameImage(m_Framebuffer->GetColorAttachmentRendererID(), 320, 180, m_Framebuffer->GetColorAttachmentRendererID(), true);
 
     if (Tabby::Input::IsKeyPressed(Tabby::Key::Q))
         m_GizmoType = -1;

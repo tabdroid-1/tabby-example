@@ -1,5 +1,6 @@
 {
 	"asset":{
+		"copyright":"Spawnland",
 		"generator":"Khronos glTF Blender I/O v4.1.63",
 		"version":"2.0"
 	},
@@ -14,7 +15,10 @@
 				3,
 				4,
 				5,
-				6
+				6,
+				7,
+				8,
+				9
 			]
 		}
 	],
@@ -78,33 +82,103 @@
 			"name":"dt_Grass.002",
 			"rotation":[
 				0.6834322810173035,
-				0.18143945932388306,
-				0.18143966794013977,
+				0.18143944442272186,
+				0.18143963813781738,
 				0.6834322810173035
 			],
+			"scale":[
+				1.5811675786972046,
+				1.581167459487915,
+				1.5811675786972046
+			],
 			"translation":[
-				35.156681060791016,
-				1.2663631439208984,
-				0
+				35.41419219970703,
+				0.9434846043586731,
+				0.03162611648440361
 			]
 		},
 		{
 			"mesh":5,
-			"name":"dt_Grass.003",
+			"name":"dt_Grass.004",
 			"rotation":[
-				0.7070977687835693,
-				0.003564876737073064,
-				0.003565090475603938,
-				0.7070978283882141
+				0.7071064710617065,
+				-0.0006476406124420464,
+				-0.0006477643037214875,
+				0.7071065902709961
+			],
+			"scale":[
+				1.5811675786972046,
+				1.581167459487915,
+				1.5811675786972046
 			],
 			"translation":[
-				26.533344268798828,
-				0.7236356735229492,
-				-2.4059681891230866e-06
+				25.99370574951172,
+				0.4666609764099121,
+				0.031626179814338684
 			]
 		},
 		{
 			"mesh":6,
+			"name":"dt_Grass.003",
+			"rotation":[
+				0.7071064710617065,
+				-0.0006476406124420464,
+				-0.0006477643037214875,
+				0.7071065902709961
+			],
+			"scale":[
+				1.5811675786972046,
+				1.581167459487915,
+				1.5811675786972046
+			],
+			"translation":[
+				23.786672592163086,
+				0.47070422768592834,
+				0.031626567244529724
+			]
+		},
+		{
+			"mesh":7,
+			"name":"dt_Grass.005",
+			"rotation":[
+				0.7071064710617065,
+				-0.0006476406124420464,
+				-0.0006477643037214875,
+				0.7071065902709961
+			],
+			"scale":[
+				1.5811675786972046,
+				1.581167459487915,
+				1.5811675786972046
+			],
+			"translation":[
+				22.29239845275879,
+				0.4734417200088501,
+				0.031626828014850616
+			]
+		},
+		{
+			"mesh":8,
+			"name":"dt_Grass.006",
+			"rotation":[
+				0.7071064710617065,
+				-0.0006476406124420464,
+				-0.0006477643037214875,
+				0.7071065902709961
+			],
+			"scale":[
+				1.5811675786972046,
+				1.581167459487915,
+				1.5811675786972046
+			],
+			"translation":[
+				20.476566314697266,
+				0.47676828503608704,
+				0.031627144664525986
+			]
+		},
+		{
+			"mesh":9,
 			"name":"sp_Player",
 			"rotation":[
 				0.7071068286895752,
@@ -142,6 +216,19 @@
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":1
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
+			"alphaCutoff":0.5,
+			"alphaMode":"MASK",
+			"doubleSided":true,
+			"name":"Material.002",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":2
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -212,12 +299,13 @@
 						"NORMAL":16,
 						"TEXCOORD_0":17
 					},
-					"indices":11
+					"indices":11,
+					"material":2
 				}
 			]
 		},
 		{
-			"name":"Plane.006",
+			"name":"Plane.007",
 			"primitives":[
 				{
 					"attributes":{
@@ -225,7 +313,50 @@
 						"NORMAL":19,
 						"TEXCOORD_0":20
 					},
-					"indices":11
+					"indices":11,
+					"material":2
+				}
+			]
+		},
+		{
+			"name":"Plane.009",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":21,
+						"NORMAL":22,
+						"TEXCOORD_0":23
+					},
+					"indices":11,
+					"material":2
+				}
+			]
+		},
+		{
+			"name":"Plane.010",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":24,
+						"NORMAL":25,
+						"TEXCOORD_0":26
+					},
+					"indices":11,
+					"material":2
+				}
+			]
+		},
+		{
+			"name":"Plane.011",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":27,
+						"NORMAL":28,
+						"TEXCOORD_0":29
+					},
+					"indices":11,
+					"material":2
 				}
 			]
 		},
@@ -234,9 +365,9 @@
 			"primitives":[
 				{
 					"attributes":{
-						"POSITION":21,
-						"NORMAL":22,
-						"TEXCOORD_0":23
+						"POSITION":30,
+						"NORMAL":31,
+						"TEXCOORD_0":32
 					},
 					"indices":11
 				}
@@ -251,13 +382,22 @@
 		{
 			"sampler":1,
 			"source":0
+		},
+		{
+			"sampler":1,
+			"source":1
 		}
 	],
 	"images":[
 		{
 			"mimeType":"image/jpeg",
 			"name":"wood",
-			"uri":"wood.jpg"
+			"uri":"textures/mapTextures/wood.jpg"
+		},
+		{
+			"mimeType":"image/png",
+			"name":"Grass",
+			"uri":"textures/mapTextures/Grass.png"
 		}
 	],
 	"accessors":[
@@ -454,12 +594,12 @@
 			"max":[
 				1,
 				0,
-				0.006789445877075195
+				1
 			],
 			"min":[
 				-1,
 				0,
-				-1.9932105541229248
+				-1
 			],
 			"type":"VEC3"
 		},
@@ -471,6 +611,90 @@
 		},
 		{
 			"bufferView":23,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":24,
+			"componentType":5126,
+			"count":4,
+			"max":[
+				1,
+				0,
+				1
+			],
+			"min":[
+				-1,
+				0,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":25,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":26,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":27,
+			"componentType":5126,
+			"count":4,
+			"max":[
+				1,
+				0,
+				1
+			],
+			"min":[
+				-1,
+				0,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":28,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":29,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":30,
+			"componentType":5126,
+			"count":4,
+			"max":[
+				1,
+				0,
+				0.006789445877075195
+			],
+			"min":[
+				-1,
+				0,
+				-1.9932105541229248
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":31,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":32,
 			"componentType":5126,
 			"count":4,
 			"type":"VEC2"
@@ -620,6 +844,60 @@
 			"byteLength":32,
 			"byteOffset":3596,
 			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3628,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3676,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":32,
+			"byteOffset":3724,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3756,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3804,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":32,
+			"byteOffset":3852,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3884,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":48,
+			"byteOffset":3932,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":32,
+			"byteOffset":3980,
+			"target":34962
 		}
 	],
 	"samplers":[
@@ -636,7 +914,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":3628,
+			"byteLength":4012,
 			"uri":"test_map.bin"
 		}
 	]
