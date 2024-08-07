@@ -1,4 +1,3 @@
 [submodule "vendor/tabby"]
 	path = vendor/tabby
 	url = https://github.com/tabdroid-1/TabbyEngine.git
-	branch = customRenderer-dev
