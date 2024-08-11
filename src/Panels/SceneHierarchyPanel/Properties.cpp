@@ -67,11 +67,6 @@ void PropertiesPanel::OnImGuiRender()
                         m_Entity.AddComponent<CircleCollider2DComponent>();
                     ImGui::EndDisabled();
 
-                    ImGui::BeginDisabled(m_Entity.HasComponent<NativeScriptComponent>());
-                    if (ImGui::MenuItem("Script component"))
-                        m_Entity.AddComponent<NativeScriptComponent>();
-                    ImGui::EndDisabled();
-
                     ImGui::EndPopup();
                 }
 
@@ -189,7 +184,7 @@ void PropertiesPanel::OnImGuiRender()
                                         texture_path,
                                         std::filesystem::copy_options::overwrite_existing);
 
-                                    sc.Texture = AssetManager::Get()->LoadAssetSource(texture_path);
+                                    sc.Texture = AssetManager::LoadAssetSource(texture_path);
 
                                     // sc.Texture =
 
@@ -481,31 +476,6 @@ void PropertiesPanel::OnImGuiRender()
                             ImGui::SliderFloat("##sphere_collider_restitution_property", &sphere_collider_component.Restitution, 0.0f, 1.0f);
                             ImGui::EndTable();
                         }
-                        ImGui::PopStyleVar();
-                        ImGui::TreePop();
-                    }
-                }
-            }
-            if (m_Entity.HasComponent<NativeScriptComponent>()) {
-                if (ImGui::Button(" - ##native_script_component")) {
-                    m_Entity.RemoveComponent<NativeScriptComponent>();
-                } else {
-                    ImGui::SameLine();
-                    if (ImGui::TreeNode("Native Script component")) {
-                        NativeScriptComponent& script_component = m_Entity.GetComponent<NativeScriptComponent>();
-                        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 5.0f });
-
-                        if (ImGui::BeginTable("##script_component_properties", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerH)) {
-                            ImGui::TableNextRow();
-                            ImGui::TableNextColumn();
-                            ImGui::Text("Script name");
-
-                            ImGui::TableNextColumn();
-                            // ImGui::InputText("##", script_component.class_name.data(), script_component.class_name.capacity());
-                            // script_component.class_name.resize(strlen(script_component.class_name.c_str()));
-                            ImGui::EndTable();
-                        }
-
                         ImGui::PopStyleVar();
                         ImGui::TreePop();
                     }

@@ -1,8 +1,6 @@
 #include <Base.h>
 #include <Tabby.h>
 
-#include "Sandbox2D.h"
-
 namespace App {
 
 class Sandbox : public Tabby::Application {

@@ -1,5 +1,5 @@
 #include <MapLoader.h>
-#include <CustomComponent/Components.h>
+#include <Components.h>
 #include <Tabby.h>
 
 #include <fastgltf/core.hpp>
@@ -79,8 +79,8 @@ void MapLoader::LoadImages(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
 
                            const std::string path(filePath.uri.path());
 
-                           Tabby::AssetHandle handle = Tabby::AssetManager::Get()->LoadAssetSource(path, handle);
-                           imageptr = Tabby::AssetManager::Get()->GetAsset<Tabby::Texture>(handle);
+                           Tabby::AssetHandle handle = Tabby::AssetManager::LoadAssetSource(path, handle);
+                           imageptr = Tabby::AssetManager::GetAsset<Tabby::Texture>(handle);
                        },
                    },
             image.data);

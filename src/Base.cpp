@@ -1,13 +1,12 @@
 #include "Base.h"
 #include <MapLoader.h>
+#include <Resources.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <ImGuizmo.h>
-#include <CustomComponent/Components.h>
 
-static Tabby::Shared<Tabby::Font> s_Font;
 float fps = 0;
 
 namespace App {
@@ -15,14 +14,13 @@ namespace App {
 Base::Base()
     : Layer("Base")
 {
-    s_Font = Tabby::Font::GetDefault();
 }
 
 void Base::OnAttach()
 {
     TB_PROFILE_SCOPE();
 
-    Tabby::World::Init();
+    Tabby::World::OnStart();
     Tabby::Application::Get().GetWindow().SetVSync(false);
 
     Tabby::FramebufferSpecification fbSpec;
@@ -30,8 +28,6 @@ void Base::OnAttach()
     fbSpec.Width = 2560;
     fbSpec.Height = 1600;
     m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
-
-    Tabby::World::OnStart();
 
     {
         auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
@@ -44,20 +40,46 @@ void Base::OnAttach()
         // GroundEntity.AddComponent<Tabby::SpriteRendererComponent>();
         auto& rb = GroundEntity.AddComponent<Tabby::Rigidbody2DComponent>();
         rb.Type = Tabby::Rigidbody2DComponent::BodyType::Static;
+        rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
+            TB_INFO("Enter: {}", a.CollidedEntity.GetName());
+        };
+        rb.OnCollisionExitCallback = [](Tabby::Collision a) {
+            TB_INFO("Exit: {}", a.CollidedEntity.GetName());
+        };
         auto& bc = GroundEntity.AddComponent<Tabby::BoxCollider2DComponent>();
         bc.Size = { 3.0f, 0.5f };
+        bc.EnableContactEvents = true;
+        bc.EnablePreSolveEvents = true;
     }
 
     {
-        auto DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
-        DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
+
+        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
+        auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
+        sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
         auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
         rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
+        rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
+            TB_INFO("Enter: {}", a.CollidedEntity.GetName());
+        };
+        rb.OnCollisionExitCallback = [](Tabby::Collision a) {
+            TB_INFO("Exit: {}", a.CollidedEntity.GetName());
+        };
         auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
         bc.Size = { 2.0f, 0.5f };
 
+        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
+        tc.TextString = "alskdmalksmdalksmd";
+
         DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 10;
     }
+
+    Tabby::AssetHandle audioHanle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street.mp3");
+    Tabby::Shared<Tabby::Audio> audio = Tabby::AssetManager::GetAsset<Tabby::Audio>(audioHanle);
+    Tabby::AudioEngine::SetPlayerMusic(audio);
+    Tabby::AudioEngine::PlayMusicPlayer();
+
+    auto& data = Tabby::World::AddResource<PlayerInputData>();
 
     MapLoader::Parse("scenes/test_map.gltf");
 }
@@ -185,8 +207,6 @@ void Base::OnImGuiRender()
     ImGui::Text("FPS: %.2f", fps);
     ImGui::DragFloat2("Size", glm::value_ptr(m_ViewportSize));
     ImGui::Checkbox("Show physics colliders", &m_ShowPhysicsColliders);
-
-    // ImGui::Image((ImTextureID)s_Font->GetAtlasTexture()->GetRendererID(), { 512, 512 }, { 0, 1 }, { 1, 0 });
 
     if (ImGui::Button("File Dialog Open(test)")) {
         TB_INFO("{0}", Tabby::FileDialogs::OpenFile(".png"));

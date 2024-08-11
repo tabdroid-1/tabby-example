@@ -9,8 +9,8 @@ ContentBrowserPanel::ContentBrowserPanel()
     : m_BaseDirectory(std::filesystem::current_path())
     , m_CurrentDirectory(m_BaseDirectory)
 {
-    m_DirectoryIcon = AssetManager::Get()->GetAsset<Texture>(AssetManager::Get()->LoadAssetSource("icons/ContentBrowser/DirectoryIcon.png", UUID()));
-    m_FileIcon = AssetManager::Get()->GetAsset<Texture>(AssetManager::Get()->LoadAssetSource("icons/ContentBrowser/FileIcon.png", UUID()));
+    m_DirectoryIcon = AssetManager::GetAsset<Texture>(AssetManager::LoadAssetSource("icons/ContentBrowser/DirectoryIcon.png", UUID()));
+    m_FileIcon = AssetManager::GetAsset<Texture>(AssetManager::LoadAssetSource("icons/ContentBrowser/FileIcon.png", UUID()));
 }
 
 void ContentBrowserPanel::OnImGuiRender()
