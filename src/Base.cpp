@@ -33,6 +33,8 @@ void Base::OnAttach()
         auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
         auto cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
         cc.Camera.SetPerspectiveFarClip(10000);
+
+        cameraEntity.AddComponent<Tabby::AudioListenerComponent>();
     }
 
     {
@@ -71,13 +73,14 @@ void Base::OnAttach()
         auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
         tc.TextString = "alskdmalksmdalksmd";
 
+        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
+        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
+        asc.SetAudio(audioHandle);
+        asc.SetLooping(true);
+        asc.Play();
+
         DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 10;
     }
-
-    Tabby::AssetHandle audioHanle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street.mp3");
-    Tabby::Shared<Tabby::Audio> audio = Tabby::AssetManager::GetAsset<Tabby::Audio>(audioHanle);
-    Tabby::AudioEngine::SetPlayerMusic(audio);
-    Tabby::AudioEngine::PlayMusicPlayer();
 
     auto& data = Tabby::World::AddResource<PlayerInputData>();
 
@@ -265,7 +268,7 @@ void Base::OnImGuiRender()
         Tabby::Matrix4 transform = tc.GetTransform();
 
         // Snapping
-        bool snap = Tabby::Input::IsKeyPressed(Tabby::Key::LeftControl);
+        bool snap = Tabby::Input::IsKeyPressed(Tabby::Key::LControl);
         float snapValue = 0.5f; // Snap to 0.5m for translation/scale
         // Snap to 45 degrees for rotation
         if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)

@@ -21,7 +21,7 @@ float screenPxRange() {
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
 }
-
+a
 void main()
 {
     vec4 sampled = vec4(1.0, 1.0, 1.0, texture(u_FontAtlas, v_TexCoord).r);
