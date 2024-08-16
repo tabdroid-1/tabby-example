@@ -35,7 +35,9 @@ void main()
 
 #type fragment
 #version 300 es
-precision mediump float;
+precision highp float;
+// precision highp float;
+// precision highp sampler2D;
 
 out vec4 o_Color;
 out int o_EntityID;
@@ -83,33 +85,33 @@ float median(float r, float g, float b) {
 
 void main()
 {
-	vec4 texColor;
 	vec3 msd;
 
 	switch(int(v_TexIndex))
 	{
-		case  0: texColor = v_Color * texture(u_FontAtlases[ 0], v_TexCoord); msd = texture(u_FontAtlases[ 0], v_TexCoord).rgb; break;
-		case  1: texColor = v_Color * texture(u_FontAtlases[ 1], v_TexCoord); msd = texture(u_FontAtlases[ 1], v_TexCoord).rgb; break;
-		case  2: texColor = v_Color * texture(u_FontAtlases[ 2], v_TexCoord); msd = texture(u_FontAtlases[ 2], v_TexCoord).rgb; break;
-		case  3: texColor = v_Color * texture(u_FontAtlases[ 3], v_TexCoord); msd = texture(u_FontAtlases[ 3], v_TexCoord).rgb; break;
-		case  4: texColor = v_Color * texture(u_FontAtlases[ 4], v_TexCoord); msd = texture(u_FontAtlases[ 4], v_TexCoord).rgb; break;
-		case  5: texColor = v_Color * texture(u_FontAtlases[ 5], v_TexCoord); msd = texture(u_FontAtlases[ 5], v_TexCoord).rgb; break;
-		case  6: texColor = v_Color * texture(u_FontAtlases[ 6], v_TexCoord); msd = texture(u_FontAtlases[ 6], v_TexCoord).rgb; break;
-		case  7: texColor = v_Color * texture(u_FontAtlases[ 7], v_TexCoord); msd = texture(u_FontAtlases[ 7], v_TexCoord).rgb; break;
-		case  8: texColor = v_Color * texture(u_FontAtlases[ 8], v_TexCoord); msd = texture(u_FontAtlases[ 8], v_TexCoord).rgb; break;
-		case  9: texColor = v_Color * texture(u_FontAtlases[ 9], v_TexCoord); msd = texture(u_FontAtlases[ 9], v_TexCoord).rgb; break;
-		case 10: texColor = v_Color * texture(u_FontAtlases[10], v_TexCoord); msd = texture(u_FontAtlases[10], v_TexCoord).rgb; break;
-		case 11: texColor = v_Color * texture(u_FontAtlases[11], v_TexCoord); msd = texture(u_FontAtlases[11], v_TexCoord).rgb; break;
-		case 12: texColor = v_Color * texture(u_FontAtlases[12], v_TexCoord); msd = texture(u_FontAtlases[12], v_TexCoord).rgb; break;
-		case 13: texColor = v_Color * texture(u_FontAtlases[13], v_TexCoord); msd = texture(u_FontAtlases[13], v_TexCoord).rgb; break;
-		case 14: texColor = v_Color * texture(u_FontAtlases[14], v_TexCoord); msd = texture(u_FontAtlases[14], v_TexCoord).rgb; break;
-		case 15: texColor = v_Color * texture(u_FontAtlases[15], v_TexCoord); msd = texture(u_FontAtlases[15], v_TexCoord).rgb; break;
+		case  0: msd = texture(u_FontAtlases[ 0], v_TexCoord).rgb; break; // texture is black?
+		case  1: msd = texture(u_FontAtlases[ 1], v_TexCoord).rgb; break;
+		case  2: msd = texture(u_FontAtlases[ 2], v_TexCoord).rgb; break;
+		case  3: msd = texture(u_FontAtlases[ 3], v_TexCoord).rgb; break;
+		case  4: msd = texture(u_FontAtlases[ 4], v_TexCoord).rgb; break;
+		case  5: msd = texture(u_FontAtlases[ 5], v_TexCoord).rgb; break;
+		case  6: msd = texture(u_FontAtlases[ 6], v_TexCoord).rgb; break;
+		case  7: msd = texture(u_FontAtlases[ 7], v_TexCoord).rgb; break;
+		case  8: msd = texture(u_FontAtlases[ 8], v_TexCoord).rgb; break;
+		case  9: msd = texture(u_FontAtlases[ 9], v_TexCoord).rgb; break;
+		case 10: msd = texture(u_FontAtlases[10], v_TexCoord).rgb; break;
+		case 11: msd = texture(u_FontAtlases[11], v_TexCoord).rgb; break;
+		case 12: msd = texture(u_FontAtlases[12], v_TexCoord).rgb; break;
+		case 13: msd = texture(u_FontAtlases[13], v_TexCoord).rgb; break;
+		case 14: msd = texture(u_FontAtlases[14], v_TexCoord).rgb; break;
+		case 15: msd = texture(u_FontAtlases[15], v_TexCoord).rgb; break;
 	}
 
 
     float sd = median(msd.r, msd.g, msd.b);
     float screenPxDistance = screenPxRange()*(sd - 0.5);
     float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+
 	if (opacity == 0.0)
 		discard;
 

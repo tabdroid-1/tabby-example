@@ -73,6 +73,9 @@ void Base::OnAttach()
         auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
         tc.TextString = "alskdmalksmdalksmd";
 
+        auto font = Tabby::AssetManager::GetAsset<Tabby::Font>(tc.Font);
+        sc.Texture = font->GetAtlasTexture();
+
         auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
         Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
         asc.SetAudio(audioHandle);

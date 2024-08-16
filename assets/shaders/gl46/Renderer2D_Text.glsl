@@ -87,27 +87,26 @@ float median(float r, float g, float b) {
 
 void main()
 {
-	vec4 texColor;
 	vec3 msd;
 
 	switch(int(Input.TexIndex))
 	{
-		case  0: texColor = Input.Color * texture(u_FontAtlases[ 0], Input.TexCoord); msd = texture(u_FontAtlases[ 0], Input.TexCoord).rgb; break;
-		case  1: texColor = Input.Color * texture(u_FontAtlases[ 1], Input.TexCoord); msd = texture(u_FontAtlases[ 1], Input.TexCoord).rgb; break;
-		case  2: texColor = Input.Color * texture(u_FontAtlases[ 2], Input.TexCoord); msd = texture(u_FontAtlases[ 2], Input.TexCoord).rgb; break;
-		case  3: texColor = Input.Color * texture(u_FontAtlases[ 3], Input.TexCoord); msd = texture(u_FontAtlases[ 3], Input.TexCoord).rgb; break;
-		case  4: texColor = Input.Color * texture(u_FontAtlases[ 4], Input.TexCoord); msd = texture(u_FontAtlases[ 4], Input.TexCoord).rgb; break;
-		case  5: texColor = Input.Color * texture(u_FontAtlases[ 5], Input.TexCoord); msd = texture(u_FontAtlases[ 5], Input.TexCoord).rgb; break;
-		case  6: texColor = Input.Color * texture(u_FontAtlases[ 6], Input.TexCoord); msd = texture(u_FontAtlases[ 6], Input.TexCoord).rgb; break;
-		case  7: texColor = Input.Color * texture(u_FontAtlases[ 7], Input.TexCoord); msd = texture(u_FontAtlases[ 7], Input.TexCoord).rgb; break;
-		case  8: texColor = Input.Color * texture(u_FontAtlases[ 8], Input.TexCoord); msd = texture(u_FontAtlases[ 8], Input.TexCoord).rgb; break;
-		case  9: texColor = Input.Color * texture(u_FontAtlases[ 9], Input.TexCoord); msd = texture(u_FontAtlases[ 9], Input.TexCoord).rgb; break;
-		case 10: texColor = Input.Color * texture(u_FontAtlases[10], Input.TexCoord); msd = texture(u_FontAtlases[10], Input.TexCoord).rgb; break;
-		case 11: texColor = Input.Color * texture(u_FontAtlases[11], Input.TexCoord); msd = texture(u_FontAtlases[11], Input.TexCoord).rgb; break;
-		case 12: texColor = Input.Color * texture(u_FontAtlases[12], Input.TexCoord); msd = texture(u_FontAtlases[12], Input.TexCoord).rgb; break;
-		case 13: texColor = Input.Color * texture(u_FontAtlases[13], Input.TexCoord); msd = texture(u_FontAtlases[13], Input.TexCoord).rgb; break;
-		case 14: texColor = Input.Color * texture(u_FontAtlases[14], Input.TexCoord); msd = texture(u_FontAtlases[14], Input.TexCoord).rgb; break;
-		case 15: texColor = Input.Color * texture(u_FontAtlases[15], Input.TexCoord); msd = texture(u_FontAtlases[15], Input.TexCoord).rgb; break;
+		case  0: msd = texture(u_FontAtlases[ 0], Input.TexCoord).rgb; break;
+		case  1: msd = texture(u_FontAtlases[ 1], Input.TexCoord).rgb; break;
+		case  2: msd = texture(u_FontAtlases[ 2], Input.TexCoord).rgb; break;
+		case  3: msd = texture(u_FontAtlases[ 3], Input.TexCoord).rgb; break;
+		case  4: msd = texture(u_FontAtlases[ 4], Input.TexCoord).rgb; break;
+		case  5: msd = texture(u_FontAtlases[ 5], Input.TexCoord).rgb; break;
+		case  6: msd = texture(u_FontAtlases[ 6], Input.TexCoord).rgb; break;
+		case  7: msd = texture(u_FontAtlases[ 7], Input.TexCoord).rgb; break;
+		case  8: msd = texture(u_FontAtlases[ 8], Input.TexCoord).rgb; break;
+		case  9: msd = texture(u_FontAtlases[ 9], Input.TexCoord).rgb; break;
+		case 10: msd = texture(u_FontAtlases[10], Input.TexCoord).rgb; break;
+		case 11: msd = texture(u_FontAtlases[11], Input.TexCoord).rgb; break;
+		case 12: msd = texture(u_FontAtlases[12], Input.TexCoord).rgb; break;
+		case 13: msd = texture(u_FontAtlases[13], Input.TexCoord).rgb; break;
+		case 14: msd = texture(u_FontAtlases[14], Input.TexCoord).rgb; break;
+		case 15: msd = texture(u_FontAtlases[15], Input.TexCoord).rgb; break;
 	}
 
 
