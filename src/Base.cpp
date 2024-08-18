@@ -21,12 +21,13 @@ void Base::OnAttach()
     TB_PROFILE_SCOPE();
 
     Tabby::World::OnStart();
-    Tabby::Application::Get().GetWindow().SetVSync(false);
+    Tabby::Application::GetWindow().SetVSync(false);
 
     Tabby::FramebufferSpecification fbSpec;
     fbSpec.Attachments = { Tabby::FramebufferTextureFormat::RGBA8, Tabby::FramebufferTextureFormat::RED_INTEGER, Tabby::FramebufferTextureFormat::DEPTH24STENCIL8 };
     fbSpec.Width = 2560;
     fbSpec.Height = 1600;
+    fbSpec.Samples = 1;
     m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
 
     {
@@ -73,9 +74,6 @@ void Base::OnAttach()
         auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
         tc.TextString = "alskdmalksmdalksmd";
 
-        auto font = Tabby::AssetManager::GetAsset<Tabby::Font>(tc.Font);
-        sc.Texture = font->GetAtlasTexture();
-
         auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
         Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
         asc.SetAudio(audioHandle);
@@ -88,6 +86,7 @@ void Base::OnAttach()
     auto& data = Tabby::World::AddResource<PlayerInputData>();
 
     MapLoader::Parse("scenes/test_map.gltf");
+    // Tabby::GLTFLoader::Parse("scenes/sponza.glb");
 }
 
 void Base::OnDetach()
@@ -234,7 +233,7 @@ void Base::OnImGuiRender()
     m_ViewportFocused = ImGui::IsWindowFocused();
     m_ViewportHovered = ImGui::IsWindowHovered();
 
-    Tabby::Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
+    Tabby::Application::GetImGuiLayer().BlockEvents(!m_ViewportHovered);
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };

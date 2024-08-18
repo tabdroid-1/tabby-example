@@ -116,7 +116,7 @@ void MapLoader::LoadMaterials(fastgltf::Asset& asset, std::vector<MaterialUnifor
 void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tabby::Texture>>& images, std::vector<MaterialUniforms>& materials, const std::string& mapName)
 {
 
-    std::vector<Tabby::Shared<Tabby::Mesh>> tabbyMeshes;
+    std::vector<std::pair<uint32_t, Tabby::Shared<Tabby::Mesh>>> tabbyMeshes;
 
     std::vector<int> requiredMeshIndexes;
     for (auto& node : asset.nodes) {
@@ -127,6 +127,8 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
     }
 
     int meshIndex = 0;
+    int meshGltfID = 0;
+
     for (auto& mesh : asset.meshes) {
 
         if (requiredMeshIndexes[meshIndex] == -1) {
@@ -135,7 +137,6 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
         }
         meshIndex++;
 
-        // TB_INFO("Mesh name: {}", mesh.name);
         for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it) {
 
             auto tabbyMesh = Tabby::CreateShared<Tabby::Mesh>();
@@ -220,15 +221,16 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
             tabbyMesh->SetIndices(meshIndices);
 
             tabbyMesh->Create();
-            tabbyMeshes.push_back(tabbyMesh);
+            tabbyMeshes.push_back(std::make_pair(meshGltfID, tabbyMesh));
         }
+
+        meshGltfID++;
     }
 
     auto SceneEntity = Tabby::World::CreateEntity("Map");
 
     for (auto& node : asset.nodes) {
 
-        // TB_INFO("Node name: {}", node.name);
         auto ent = Tabby::World::CreateEntity(node.name.c_str());
         auto& tc = ent.GetComponent<Tabby::TransformComponent>();
 
@@ -254,15 +256,27 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
             node.transform);
 
         if (node.name.substr(0, 3) == "br_") {
-            auto& mC = ent.AddComponent<Tabby::MeshComponent>();
-            mC.m_Mesh = tabbyMeshes[node.meshIndex.value()];
+            for (auto mesh : tabbyMeshes) {
+                if (mesh.first == node.meshIndex.value()) {
+                    auto childEnt = Tabby::World::CreateEntity(mesh.second->GetName());
+                    auto& mC = childEnt.AddComponent<Tabby::MeshComponent>();
+                    mC.m_Mesh = mesh.second;
+                    ent.AddChild(childEnt);
+                }
+            }
         } else if (node.name.substr(0, 3) == "sp_") {
             auto& sc = ent.AddComponent<App::SpawnpointComponent>();
         } else if (node.name.substr(0, 3) == "dt_") {
 
             auto& sc = ent.AddComponent<Tabby::SpriteRendererComponent>();
-            if (tabbyMeshes[node.meshIndex.value()]->GetMaterial()->GetAlbedoMap()) {
-                sc.Texture = tabbyMeshes[node.meshIndex.value()]->GetMaterial()->GetAlbedoMap()->Handle; // :3
+
+            for (auto mesh : tabbyMeshes) {
+                if (mesh.first == node.meshIndex.value()) {
+                    if (mesh.second->GetMaterial()->GetAlbedoMap()) {
+                        sc.Texture = mesh.second->GetMaterial()->GetAlbedoMap()->Handle; // idk. probably ok and safe ¯\_(ツ)_/¯
+                        break;
+                    }
+                }
             }
             tc.LocalRotation.x = 0;
             tc.LocalScale.x *= 2;
