@@ -87,6 +87,8 @@ void Base::OnAttach()
 
     MapLoader::Parse("scenes/test_map.gltf");
     // Tabby::GLTFLoader::Parse("scenes/sponza.glb");
+
+    Tabby::Application::SetConsoleActive(true);
 }
 
 void Base::OnDetach()
