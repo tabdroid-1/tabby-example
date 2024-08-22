@@ -10,6 +10,10 @@ set(PROJECT_SRC_DIR "src")
 set(PROJECT_VENDOR_DIR "vendor")
 set(PROJECT_ASSETS_DIR "${CMAKE_CURRENT_LIST_DIR}/assets")
 
+if (WIN32)
+    add_definitions(-w) # disables warnings
+endif()
+
 macro(append_linker_flags FLAGS)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
 endmacro()
@@ -24,6 +28,7 @@ file(GLOB_RECURSE PROJECT_SOURCES
 list(APPEND PROJECT_SOURCES
         ${PROJECT_VENDOR_DIR}/tinyobjloader/tinyobjloader.cpp
         )
+
 
 
 if (ANDROID)

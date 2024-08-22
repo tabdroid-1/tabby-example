@@ -1,4 +1,4 @@
-graphics_api=gl46
+graphics_api=gles3
 max_fps=120
-vsync=1
-fullscreen=1
+vsync=0
+fullscreen=0

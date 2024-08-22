@@ -60,6 +60,33 @@ void Base::OnAttach()
         Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
         auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
         sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
+        // auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
+        // rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
+        // rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
+        //     TB_INFO("Enter: {}", a.CollidedEntity.GetName());
+        // };
+        // rb.OnCollisionExitCallback = [](Tabby::Collision a) {
+        //     TB_INFO("Exit: {}", a.CollidedEntity.GetName());
+        // };
+        // auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
+        // bc.Size = { 2.0f, 0.5f };
+
+        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
+        tc.TextString = "alskdmalksmdalksmd";
+
+        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
+        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
+        asc.SetAudio(audioHandle);
+        asc.SetLooping(true);
+        asc.Play();
+
+        DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 1;
+    }
+
+    for (int i = 0; i < 100; i++) {
+        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
+        auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
+        sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
         auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
         rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
         rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
@@ -71,14 +98,7 @@ void Base::OnAttach()
         auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
         bc.Size = { 2.0f, 0.5f };
 
-        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
-        tc.TextString = "alskdmalksmdalksmd";
-
-        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
-        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
-        asc.SetAudio(audioHandle);
-        asc.SetLooping(true);
-        asc.Play();
+        auto& cr = DynamicEntity.AddComponent<Tabby::CircleRendererComponent>();
 
         DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 10;
     }
@@ -143,7 +163,7 @@ void Base::OnImGuiRender()
 {
     TB_PROFILE_SCOPE();
 
-    Tabby::World::DrawImGui();
+    // Tabby::World::DrawImGui();
 
     // Note: Switch this to true to enable dockspace
     static bool dockspaceOpen = false;
