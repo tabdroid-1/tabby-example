@@ -36,7 +36,7 @@ private:
 
     static void LoadImages(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tabby::Texture>>& images);
     static void LoadMaterials(fastgltf::Asset& asset, std::vector<MaterialUniforms>& materials);
-    static void LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tabby::Texture>>& images, std::vector<MaterialUniforms>& materials, const std::string& mapName);
+    static void LoadMeshes(fastgltf::Asset& asset, fastgltf::Parser& parser, std::vector<Tabby::Shared<Tabby::Texture>>& images, std::vector<MaterialUniforms>& materials, const std::string& mapName);
 };
 
 }

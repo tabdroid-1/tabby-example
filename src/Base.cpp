@@ -1,9 +1,13 @@
 #include "Base.h"
 #include <MapLoader.h>
 #include <Resources.h>
+#include <Components.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -20,9 +24,6 @@ void Base::OnAttach()
 {
     TB_PROFILE_SCOPE();
 
-    Tabby::World::OnStart();
-    Tabby::Application::GetWindow().SetVSync(false);
-
     Tabby::FramebufferSpecification fbSpec;
     fbSpec.Attachments = { Tabby::FramebufferTextureFormat::RGBA8, Tabby::FramebufferTextureFormat::RED_INTEGER, Tabby::FramebufferTextureFormat::DEPTH24STENCIL8 };
     fbSpec.Width = 2560;
@@ -30,63 +31,59 @@ void Base::OnAttach()
     fbSpec.Samples = 1;
     m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
 
-    {
-        auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
-        auto cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
-        cc.Camera.SetPerspectiveFarClip(10000);
+    Tabby::World::Init();
+    Tabby::Application::GetWindow().SetVSync(false);
 
-        cameraEntity.AddComponent<Tabby::AudioListenerComponent>();
-    }
+    MapLoader::Parse("scenes/test_map.gltf");
 
-    {
-        auto GroundEntity = Tabby::World::CreateEntity("GroundEntity");
-        // GroundEntity.AddComponent<Tabby::SpriteRendererComponent>();
-        auto& rb = GroundEntity.AddComponent<Tabby::Rigidbody2DComponent>();
-        rb.Type = Tabby::Rigidbody2DComponent::BodyType::Static;
-        rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
-            TB_INFO("Enter: {}", a.CollidedEntity.GetName());
-        };
-        rb.OnCollisionExitCallback = [](Tabby::Collision a) {
-            TB_INFO("Exit: {}", a.CollidedEntity.GetName());
-        };
-        auto& bc = GroundEntity.AddComponent<Tabby::BoxCollider2DComponent>();
-        bc.Size = { 3.0f, 0.5f };
-        bc.EnableContactEvents = true;
-        bc.EnablePreSolveEvents = true;
-    }
+    auto& data = Tabby::World::AddResource<PlayerInputData>();
 
-    {
+    Tabby::World::AddSystem(Tabby::Schedule::Update, [](entt::registry&) {
+        std::vector<Tabby::TransformComponent> spawnpoints;
+        auto spawnpointView = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, App::SpawnpointComponent>();
+        for (auto entity : spawnpointView) {
+            auto [tc, sc] = spawnpointView.get<Tabby::TransformComponent, App::SpawnpointComponent>(entity);
+            if (sc.entityName == "Player")
+                spawnpoints.push_back(tc);
+        }
 
-        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
+        auto view = Tabby::World::GetAllEntitiesWith<Tabby::Rigidbody2DComponent, App::PlayerComponent>();
+        for (auto entity : view) {
+            auto& rb = Tabby::Entity(entity).GetComponent<Tabby::Rigidbody2DComponent>();
+            if (Tabby::Input::IsKeyPressed(Tabby::Key::B))
+                rb.SetVelocity({ 0.0f, 0.1f });
+
+            if (Tabby::Input::IsKeyPressed(Tabby::Key::M)) {
+                const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
+                auto& tr = Tabby::Entity(entity).GetComponent<Tabby::TransformComponent>();
+                tr.LocalTranslation = spawnpoint.LocalTranslation;
+                tr.LocalRotation = spawnpoint.LocalRotation;
+                tr.LocalScale = spawnpoint.LocalScale;
+            }
+        }
+    });
+
+    Tabby::World::AddSystem(Tabby::Schedule::Startup, [](entt::registry&) {
+        std::vector<Tabby::TransformComponent> spawnpoints;
+        auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, App::SpawnpointComponent>();
+        for (auto entity : view) {
+            auto [tc, sc] = view.get<Tabby::TransformComponent, App::SpawnpointComponent>(entity);
+            if (sc.entityName == "Player")
+                spawnpoints.push_back(tc);
+        }
+
+        const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
+
+        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("Player");
+
+        auto& tr = DynamicEntity.GetComponent<Tabby::TransformComponent>();
+        tr.LocalTranslation = spawnpoint.LocalTranslation;
+        tr.LocalRotation = spawnpoint.LocalRotation;
+        tr.LocalScale = spawnpoint.LocalScale;
+
         auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
         sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
-        // auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
-        // rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
-        // rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
-        //     TB_INFO("Enter: {}", a.CollidedEntity.GetName());
-        // };
-        // rb.OnCollisionExitCallback = [](Tabby::Collision a) {
-        //     TB_INFO("Exit: {}", a.CollidedEntity.GetName());
-        // };
-        // auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
-        // bc.Size = { 2.0f, 0.5f };
-
-        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
-        tc.TextString = "alskdmalksmdalksmd";
-
-        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
-        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
-        asc.SetAudio(audioHandle);
-        asc.SetLooping(true);
-        asc.Play();
-
-        DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 1;
-    }
-
-    for (int i = 0; i < 100; i++) {
-        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("DynamicEntity");
-        auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
-        sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
+        DynamicEntity.AddComponent<App::PlayerComponent>();
         auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
         rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
         rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
@@ -98,17 +95,26 @@ void Base::OnAttach()
         auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
         bc.Size = { 2.0f, 0.5f };
 
-        auto& cr = DynamicEntity.AddComponent<Tabby::CircleRendererComponent>();
+        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
+        tc.TextString = "Player";
 
-        DynamicEntity.GetComponent<Tabby::TransformComponent>().Translation.y = 10;
+        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
+        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
+        asc.SetAudio(audioHandle);
+        asc.SetLooping(true);
+        asc.Play();
+    });
+
+    {
+        auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
+        auto& cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
+        cc.Camera.SetOrthographicFarClip(10000);
+        cc.Camera.SetOrthographicSize(100);
+
+        cameraEntity.AddComponent<Tabby::AudioListenerComponent>();
     }
 
-    auto& data = Tabby::World::AddResource<PlayerInputData>();
-
-    MapLoader::Parse("scenes/test_map.gltf");
-    // Tabby::GLTFLoader::Parse("scenes/sponza.glb");
-
-    Tabby::Application::SetConsoleActive(true);
+    Tabby::World::OnStart();
 }
 
 void Base::OnDetach()
@@ -120,7 +126,6 @@ void Base::OnDetach()
 
 void Base::OnUpdate()
 {
-
     Tabby::World::OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
     if (Tabby::FramebufferSpecification spec = m_Framebuffer->GetSpecification();
@@ -309,9 +314,9 @@ void Base::OnImGuiRender()
             Tabby::Math::DecomposeTransform(transform, (Tabby::Vector3&)translation, (Tabby::Vector3&)rotation, (Tabby::Vector3&)scale);
 
             Tabby::Vector3 deltaRotation = rotation - tc.Rotation;
-            tc.Translation = translation;
-            tc.Rotation += deltaRotation;
-            tc.Scale = scale;
+            tc.LocalTranslation = translation;
+            tc.LocalRotation += deltaRotation;
+            tc.LocalScale = scale;
         }
     }
 
@@ -332,8 +337,11 @@ void Base::OnOverlayRender()
         // Box Colliders
         {
             auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, Tabby::BoxCollider2DComponent>();
-            for (auto entity : view) {
-                auto [tc, bc2d] = view.get<Tabby::TransformComponent, Tabby::BoxCollider2DComponent>(entity);
+            for (auto e : view) {
+                // auto [tc, bc2d] = view.get<Tabby::TransformComponent, Tabby::BoxCollider2DComponent>(entity);
+                Tabby::Entity entity(e);
+                auto& tc = entity.GetComponent<Tabby::TransformComponent>();
+                auto& bc2d = entity.GetComponent<Tabby::BoxCollider2DComponent>();
 
                 Tabby::Vector3 translation = tc.Translation + Tabby::Vector3(bc2d.Offset, 0.001f);
                 Tabby::Vector3 scale = Tabby::Vector3(bc2d.Size * 2.0f, 1.0f);
@@ -350,8 +358,10 @@ void Base::OnOverlayRender()
         // Circle Colliders
         {
             auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, Tabby::CircleCollider2DComponent>();
-            for (auto entity : view) {
-                auto [tc, cc2d] = view.get<Tabby::TransformComponent, Tabby::CircleCollider2DComponent>(entity);
+            for (auto e : view) {
+                Tabby::Entity entity(e);
+                auto& tc = entity.GetComponent<Tabby::TransformComponent>();
+                auto& cc2d = entity.GetComponent<Tabby::CircleCollider2DComponent>();
 
                 Tabby::Vector3 translation = tc.Translation + Tabby::Vector3(cc2d.Offset, 0.001f);
                 Tabby::Vector3 scale = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f);
@@ -368,8 +378,10 @@ void Base::OnOverlayRender()
         // Capsule Colliders
         {
             auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, Tabby::CapsuleCollider2DComponent>();
-            for (auto entity : view) {
-                auto [tc, cc2d] = view.get<Tabby::TransformComponent, Tabby::CapsuleCollider2DComponent>(entity);
+            for (auto e : view) {
+                Tabby::Entity entity(e);
+                auto& tc = entity.GetComponent<Tabby::TransformComponent>();
+                auto& cc2d = entity.GetComponent<Tabby::CapsuleCollider2DComponent>();
 
                 Tabby::Vector3 translation1 = tc.Translation + Tabby::Vector3(cc2d.center1, 0.001f);
                 Tabby::Vector3 scale1 = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f);
@@ -396,11 +408,44 @@ void Base::OnOverlayRender()
             }
         }
 
+        // Mesh Colliders
+        {
+            auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, Tabby::PolygonCollider2DComponent>();
+            for (auto e : view) {
+                Tabby::Entity entity(e);
+                auto& tc = entity.GetComponent<Tabby::TransformComponent>();
+                auto& pc2d = entity.GetComponent<Tabby::PolygonCollider2DComponent>();
+
+                Tabby::Matrix4 rotation = glm::toMat4(glm::quat(glm::radians((glm::vec3)tc.Rotation)));
+                Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), (glm::vec3)tc.Translation) * rotation * glm::scale(Tabby::Matrix4(1.0f), (glm::vec3)tc.Scale);
+
+                for (int i = 0; i < pc2d.Points.size(); i++) {
+
+                    Tabby::Vector4 p1;
+                    Tabby::Vector4 p2;
+
+                    if (i == pc2d.Points.size() - 1) {
+                        p1 = { pc2d.Points[i], 1.0f, 1.0f };
+                        p2 = { pc2d.Points[0], 1.0f, 1.0f };
+                    } else {
+                        p1 = { pc2d.Points[i], 1.0f, 1.0f };
+                        p2 = { pc2d.Points[i + 1], 1.0f, 1.0f };
+                    }
+
+                    p1 = transform * p1;
+                    p2 = transform * p2;
+                    Tabby::Renderer2D::DrawLine(p1, p2, Tabby::Vector4(0, 1, 0, 1));
+                }
+            }
+        }
+
         // Segment Colliders
         {
             auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, Tabby::SegmentCollider2DComponent>();
-            for (auto entity : view) {
-                auto [tc, sc2d] = view.get<Tabby::TransformComponent, Tabby::SegmentCollider2DComponent>(entity);
+            for (auto e : view) {
+                Tabby::Entity entity(e);
+                auto& tc = entity.GetComponent<Tabby::TransformComponent>();
+                auto& sc2d = entity.GetComponent<Tabby::SegmentCollider2DComponent>();
 
                 Tabby::Vector3 point1 = tc.Translation + Tabby::Vector3(sc2d.point1, 0.001f);
                 Tabby::Vector3 point2 = tc.Translation + Tabby::Vector3(sc2d.point2, 0.001f);
@@ -419,8 +464,9 @@ void Base::OnOverlayRender()
 
     // Draw selected entity outline
     if (Tabby::Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedNode()) {
-        const Tabby::TransformComponent& transform = selectedEntity.GetComponent<Tabby::TransformComponent>();
-        Tabby::Renderer2D::DrawRect(transform.GetTransform(), Tabby::Vector4(1.0f, 0.5f, 0.0f, 1.0f));
+
+        auto& tc = selectedEntity.GetComponent<Tabby::TransformComponent>();
+        Tabby::Renderer2D::DrawRect(tc.GetTransform(), Tabby::Vector4(1.0f, 0.5f, 0.0f, 1.0f));
     }
 
     Tabby::Renderer2D::EndScene();

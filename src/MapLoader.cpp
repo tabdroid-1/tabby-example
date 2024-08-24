@@ -10,12 +10,47 @@
 #include <fastgltf/core.hpp>
 #include <fastgltf/types.hpp>
 #include <fastgltf/tools.hpp>
+#include "../vendor/tabby/vendor/fastgltf/deps/simdjson/simdjson.h"
 
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 namespace App {
+
+std::vector<std::vector<Tabby::Vector2>> convertToTriangles(Tabby::Shared<Tabby::Mesh> mesh)
+{
+    std::vector<std::vector<Tabby::Vector2>> triangles;
+
+    for (size_t i = 0; i < mesh->GetIndices().size(); i += 3) {
+        if (i + 2 < mesh->GetIndices().size()) {
+            std::vector<Tabby::Vector2> tri;
+            tri.push_back(mesh->GetVertices()[mesh->GetIndices()[i]].Position);
+            tri.push_back(mesh->GetVertices()[mesh->GetIndices()[i + 1]].Position);
+            tri.push_back(mesh->GetVertices()[mesh->GetIndices()[i + 2]].Position);
+            triangles.push_back(tri);
+        }
+    }
+
+    return triangles;
+}
+
+void UpdatePolygonCollider2D(Tabby::Shared<Tabby::Mesh> mesh, Tabby::Entity entity)
+{
+
+    TB_CORE_VERIFY_TAGGED(mesh->GetVertices().empty() == false, "Mesh is empty");
+    std::vector<Tabby::Mesh::Vertex> vertices = mesh->GetWorldSpaceVertices();
+
+    auto triangles = convertToTriangles(mesh);
+
+    for (const auto& triangle : triangles) {
+        Tabby::Entity childEnt = Tabby::World::CreateEntity();
+        auto& pc2d = childEnt.AddComponent<Tabby::PolygonCollider2DComponent>();
+        pc2d.Points = triangle;
+
+        entity.AddChild(childEnt);
+    }
+}
 
 void MapLoader::Parse(const std::filesystem::path& filePath)
 {
@@ -60,7 +95,7 @@ void MapLoader::Parse(const std::filesystem::path& filePath)
 
     LoadImages(m_Asset, m_Images);
     LoadMaterials(m_Asset, m_Materials);
-    LoadMeshes(m_Asset, m_Images, m_Materials, mapName);
+    LoadMeshes(m_Asset, parser, m_Images, m_Materials, mapName);
 }
 
 void MapLoader::LoadImages(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tabby::Texture>>& images)
@@ -113,14 +148,14 @@ void MapLoader::LoadMaterials(fastgltf::Asset& asset, std::vector<MaterialUnifor
     }
 }
 
-void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tabby::Texture>>& images, std::vector<MaterialUniforms>& materials, const std::string& mapName)
+void MapLoader::LoadMeshes(fastgltf::Asset& asset, fastgltf::Parser& parser, std::vector<Tabby::Shared<Tabby::Texture>>& images, std::vector<MaterialUniforms>& materials, const std::string& mapName)
 {
 
     std::vector<std::pair<uint32_t, Tabby::Shared<Tabby::Mesh>>> tabbyMeshes;
 
     std::vector<int> requiredMeshIndexes;
     for (auto& node : asset.nodes) {
-        if (node.name.substr(0, 3) == "br_" || node.name.substr(0, 3) == "dt_")
+        if (node.name.substr(0, 3) == "br_" || node.name.substr(0, 3) == "dt_" || node.name.substr(0, 3) == "db_")
             requiredMeshIndexes.push_back(node.meshIndex.value());
         else
             requiredMeshIndexes.push_back(-1);
@@ -255,7 +290,21 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
                        } },
             node.transform);
 
-        if (node.name.substr(0, 3) == "br_") {
+        if (node.name.substr(0, 3) == "br_") { // br stands for brush. it has collision
+            for (auto mesh : tabbyMeshes) {
+                if (mesh.first == node.meshIndex.value()) {
+                    auto childEnt = Tabby::World::CreateEntity(mesh.second->GetName());
+                    auto& mC = childEnt.AddComponent<Tabby::MeshComponent>();
+                    mC.m_Mesh = mesh.second;
+                    ent.AddChild(childEnt);
+
+                    auto& rb2d = childEnt.AddComponent<Tabby::Rigidbody2DComponent>();
+                    rb2d.Type = Tabby::Rigidbody2DComponent::BodyType::Static;
+
+                    UpdatePolygonCollider2D(mesh.second, childEnt);
+                }
+            }
+        } else if (node.name.substr(0, 3) == "db_") { // db stands for detail brush. it does not have collision
             for (auto mesh : tabbyMeshes) {
                 if (mesh.first == node.meshIndex.value()) {
                     auto childEnt = Tabby::World::CreateEntity(mesh.second->GetName());
@@ -264,9 +313,20 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
                     ent.AddChild(childEnt);
                 }
             }
-        } else if (node.name.substr(0, 3) == "sp_") {
+        } else if (node.name.substr(0, 3) == "sp_") { // sp stands for spawn point. entities use it to spawn here
+
+            size_t spawnerIdPosition = node.name.substr(3, node.name.size()).find("_");
+            if (spawnerIdPosition == node.name.npos) {
+                TB_ERROR("Invalid spawner node name! Name does not contain spawner ID. Discarding...");
+                continue;
+            }
+            std::string entityName = node.name.substr(3, spawnerIdPosition).c_str();
+            std::string ID = node.name.substr(4 + spawnerIdPosition, node.name.npos).c_str();
+
             auto& sc = ent.AddComponent<App::SpawnpointComponent>();
-        } else if (node.name.substr(0, 3) == "dt_") {
+            sc.entityName = entityName;
+            sc.spawnerID = std::stoi(ID);
+        } else if (node.name.substr(0, 3) == "dt_") { // dt stands for detail. it gets mesh texture and uses it to render using Tabby::Renderer2D. Does not have collision
 
             auto& sc = ent.AddComponent<Tabby::SpriteRendererComponent>();
 
@@ -278,9 +338,7 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, std::vector<Tabby::Shared<Tab
                     }
                 }
             }
-            tc.LocalRotation.x = 0;
-            tc.LocalScale.x *= 2;
-            tc.LocalScale.y *= 2;
+            tc.Scale *= 2;
         }
 
         SceneEntity.AddChild(ent);

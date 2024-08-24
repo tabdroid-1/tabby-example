@@ -5,11 +5,22 @@
 namespace App {
 
 struct SpawnpointComponent {
-    bool asd;
+    std::string entityName;
+    uint32_t spawnerID;
+
+    SpawnpointComponent() = default;
+    SpawnpointComponent(const SpawnpointComponent&) = default;
+    SpawnpointComponent(const std::string& name)
+        : entityName(name)
+    {
+    }
 };
 
 struct PlayerComponent {
     bool asd;
+
+    PlayerComponent() = default;
+    PlayerComponent(const PlayerComponent&) = default;
 };
 
 }
