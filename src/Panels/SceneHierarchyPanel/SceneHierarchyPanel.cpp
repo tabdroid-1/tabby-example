@@ -97,7 +97,7 @@ void SceneHierarchyPanel::RenderHierarchyNode(Entity entity)
     }
 
     if (ImGui::IsItemClicked()) {
-        if (Input::IsMouseButtonPressed(Mouse::ButtonLeft)) {
+        if (Input::GetMouseButtonDown(Mouse::ButtonLeft)) {
             m_SelectedNode = entity;
             m_IsSelected = true;
         }

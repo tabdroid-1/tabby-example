@@ -50,10 +50,11 @@ void Base::OnAttach()
         auto view = Tabby::World::GetAllEntitiesWith<Tabby::Rigidbody2DComponent, App::PlayerComponent>();
         for (auto entity : view) {
             auto& rb = Tabby::Entity(entity).GetComponent<Tabby::Rigidbody2DComponent>();
-            if (Tabby::Input::IsKeyPressed(Tabby::Key::B))
+            if (Tabby::Input::GetKey(Tabby::Key::B)) {
                 rb.SetVelocity({ 0.0f, 0.1f });
+            }
 
-            if (Tabby::Input::IsKeyPressed(Tabby::Key::M)) {
+            if (Tabby::Input::GetKeyDown(Tabby::Key::M)) {
                 const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
                 auto& tr = Tabby::Entity(entity).GetComponent<Tabby::TransformComponent>();
                 tr.LocalTranslation = spawnpoint.LocalTranslation;
@@ -151,13 +152,13 @@ void Base::OnUpdate()
 
     m_Framebuffer->Unbind();
 
-    if (Tabby::Input::IsKeyPressed(Tabby::Key::Q))
+    if (Tabby::Input::GetKeyDown(Tabby::Key::Q))
         m_GizmoType = -1;
-    if (Tabby::Input::IsKeyPressed(Tabby::Key::T))
+    if (Tabby::Input::GetKeyDown(Tabby::Key::T))
         m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
-    if (Tabby::Input::IsKeyPressed(Tabby::Key::S))
+    if (Tabby::Input::GetKeyDown(Tabby::Key::S))
         m_GizmoType = ImGuizmo::OPERATION::SCALE;
-    if (Tabby::Input::IsKeyPressed(Tabby::Key::R))
+    if (Tabby::Input::GetKeyDown(Tabby::Key::R))
         m_GizmoType = ImGuizmo::OPERATION::ROTATE;
 
     fps = 1.0f / Tabby::Time::GetDeltaTime();
@@ -297,7 +298,7 @@ void Base::OnImGuiRender()
         Tabby::Matrix4 transform = tc.GetTransform();
 
         // Snapping
-        bool snap = Tabby::Input::IsKeyPressed(Tabby::Key::LControl);
+        bool snap = Tabby::Input::GetKey(Tabby::Key::LControl);
         float snapValue = 0.5f; // Snap to 0.5m for translation/scale
         // Snap to 45 degrees for rotation
         if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
