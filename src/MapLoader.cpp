@@ -194,6 +194,8 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, fastgltf::Parser& parser, std
                 tabbyMaterial = Tabby::CreateShared<Tabby::Material>("UnlitMaterial", "shaders/gl33/Renderer3D_MeshUnlit.glsl");
             else if (Tabby::Renderer::GetAPI() == Tabby::RendererAPI::API::OpenGLES3)
                 tabbyMaterial = Tabby::CreateShared<Tabby::Material>("UnlitMaterial", "shaders/gles3/Renderer3D_MeshUnlit.glsl");
+            else if (Tabby::Renderer::GetAPI() == Tabby::RendererAPI::API::Null)
+                tabbyMaterial = Tabby::CreateShared<Tabby::Material>("UnlitMaterial", "");
 
             if (it->materialIndex.has_value()) {
                 materialUniformsIndex = it->materialIndex.value() + 1; // Adjust for default material

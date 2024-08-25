@@ -111,7 +111,6 @@ void Base::OnAttach()
         auto& cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
         cc.Camera.SetOrthographicFarClip(10000);
         cc.Camera.SetOrthographicSize(100);
-
         cameraEntity.AddComponent<Tabby::AudioListenerComponent>();
     }
 
@@ -144,11 +143,14 @@ void Base::OnUpdate()
         Tabby::RenderCommand::Clear();
     }
 
+    TB_INFO("asdasdasd");
     // BROKEN?
     // m_Framebuffer->ClearAttachment(1, -1);
 
     Tabby::World::Update();
+#ifndef TB_HEADLESS
     OnOverlayRender();
+#endif // TB_HEADLESS
 
     m_Framebuffer->Unbind();
 

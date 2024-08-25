@@ -49,6 +49,7 @@ add_subdirectory(${PROJECT_VENDOR_DIR}/tabby)
 
 target_link_libraries(${PROJECT_NAME}
         tabby
+        tabby_flags
         )
 
 if (EMSCRIPTEN)
