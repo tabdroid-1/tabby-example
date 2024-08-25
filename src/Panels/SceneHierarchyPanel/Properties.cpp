@@ -84,9 +84,11 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatT", glm::value_ptr((Tabby::Vector3&)trs_component.Translation), 0.1f);
-                // if (ImGui::DragFloat3("##floatT", glm::value_ptr(trs_component.Translation), 0.1f))
-                //     transform = Utils::ComposeMatrix(trs_component.Translation, trs_component.Rotation, trs_component.Scale);
+                ImGui::BeginDisabled();
+                ImGui::DragFloat3("##floatWT", glm::value_ptr((Tabby::Vector3&)trs_component.GetWorldPosition()), 0.1f);
+                ImGui::EndDisabled();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::DragFloat3("##floatT", glm::value_ptr(trs_component.position), 0.1f);
 
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
@@ -94,9 +96,11 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatR", glm::value_ptr((Tabby::Vector3&)trs_component.Rotation), 0.1f);
-                // if (ImGui::DragFloat3("##floatR", glm::value_ptr(trs_component.rotation), 0.1f))
-                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
+                ImGui::BeginDisabled();
+                ImGui::DragFloat3("##floatWR", glm::value_ptr((Tabby::Vector3&)trs_component.GetWorldRotation()), 0.1f);
+                ImGui::EndDisabled();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::DragFloat3("##floatR", glm::value_ptr(trs_component.rotation), 0.1f);
 
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
@@ -104,39 +108,12 @@ void PropertiesPanel::OnImGuiRender()
                 ImGui::SameLine();
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatS", glm::value_ptr((Tabby::Vector3&)trs_component.Scale), 0.01f);
-                // if (ImGui::DragFloat3("##floatS", glm::value_ptr(trs_component.scale), 0.01f))
-                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
-
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::Text("Local Translation");
-                ImGui::SameLine();
-                ImGui::TableNextColumn();
+                ImGui::BeginDisabled();
+                ImGui::DragFloat3("##floatWS", glm::value_ptr((Tabby::Vector3&)trs_component.GetWorldScale()), 0.1f);
+                ImGui::EndDisabled();
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatT", glm::value_ptr((Tabby::Vector3&)trs_component.LocalTranslation), 0.1f);
-                // if (ImGui::DragFloat3("##floatT", glm::value_ptr(trs_component.Translation), 0.1f))
-                //     transform = Utils::ComposeMatrix(trs_component.Translation, trs_component.Rotation, trs_component.Scale);
+                ImGui::DragFloat3("##floatS", glm::value_ptr(trs_component.scale), 0.1f);
 
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::Text("Local Rotation");
-                ImGui::SameLine();
-                ImGui::TableNextColumn();
-                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatR", glm::value_ptr((Tabby::Vector3&)trs_component.LocalRotation), 0.1f);
-                // if (ImGui::DragFloat3("##floatR", glm::value_ptr(trs_component.rotation), 0.1f))
-                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
-
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::Text("Local Scale");
-                ImGui::SameLine();
-                ImGui::TableNextColumn();
-                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::DragFloat3("##floatS", glm::value_ptr((Tabby::Vector3&)trs_component.LocalScale), 0.01f);
-                // if (ImGui::DragFloat3("##floatS", glm::value_ptr(trs_component.scale), 0.01f))
-                //     transform = Utils::ComposeMatrix(trs_component.translation, trs_component.rotation, trs_component.scale);
                 ImGui::EndTable();
             }
             ImGui::PopStyleVar();

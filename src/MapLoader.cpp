@@ -279,14 +279,14 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, fastgltf::Parser& parser, std
                                           Tabby::Quaternion Grotation = { rotation.w(), rotation.x(), rotation.y(), rotation.z() };
                                           Tabby::Vector3 Gtranslation = { translation.x(), translation.y(), translation.z() };
                                           Tabby::Matrix4 rotMat = glm::toMat4(Grotation);
-                                          tc.ApplyTransformToLocal(glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gtranslation) * rotMat * glm::scale(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gscale));
+                                          tc.ApplyTransform(glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gtranslation) * rotMat * glm::scale(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gscale));
                                       },
                        [&](const fastgltf::TRS& trs) {
                            Tabby::Vector3 Gscale = { trs.scale.x(), trs.scale.y(), trs.scale.z() };
                            Tabby::Quaternion Grotation = { trs.rotation.w(), trs.rotation.x(), trs.rotation.y(), trs.rotation.z() };
                            Tabby::Vector3 Gtranslation = { trs.translation.x(), trs.translation.y(), trs.translation.z() };
                            Tabby::Matrix4 rotMat = glm::toMat4(Grotation);
-                           tc.ApplyTransformToLocal(glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gtranslation) * rotMat * glm::scale(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gscale));
+                           tc.ApplyTransform(glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gtranslation) * rotMat * glm::scale(Tabby::Matrix4(1.0f), (Tabby::Vector3&)Gscale));
                        } },
             node.transform);
 
@@ -338,7 +338,7 @@ void MapLoader::LoadMeshes(fastgltf::Asset& asset, fastgltf::Parser& parser, std
                     }
                 }
             }
-            tc.Scale *= 2;
+            tc.scale *= 2;
         }
 
         SceneEntity.AddChild(ent);

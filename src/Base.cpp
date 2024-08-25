@@ -57,9 +57,9 @@ void Base::OnAttach()
             if (Tabby::Input::GetKeyDown(Tabby::Key::M)) {
                 const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
                 auto& tr = Tabby::Entity(entity).GetComponent<Tabby::TransformComponent>();
-                tr.LocalTranslation = spawnpoint.LocalTranslation;
-                tr.LocalRotation = spawnpoint.LocalRotation;
-                tr.LocalScale = spawnpoint.LocalScale;
+                tr.position = spawnpoint.position;
+                tr.rotation = spawnpoint.rotation;
+                tr.scale = spawnpoint.scale;
             }
         }
     });
@@ -78,9 +78,9 @@ void Base::OnAttach()
         Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("Player");
 
         auto& tr = DynamicEntity.GetComponent<Tabby::TransformComponent>();
-        tr.LocalTranslation = spawnpoint.LocalTranslation;
-        tr.LocalRotation = spawnpoint.LocalRotation;
-        tr.LocalScale = spawnpoint.LocalScale;
+        tr.position = spawnpoint.position;
+        tr.rotation = spawnpoint.rotation;
+        tr.scale = spawnpoint.scale;
 
         auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
         sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
@@ -280,10 +280,6 @@ void Base::OnImGuiRender()
     // Gizmos
     Tabby::Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedNode();
     if (selectedEntity && m_GizmoType != -1) {
-        ImGuizmo::SetOrthographic(true);
-        ImGuizmo::SetDrawlist();
-
-        ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 
         // Camera
 
@@ -291,11 +287,20 @@ void Base::OnImGuiRender()
         auto cameraEntity = Tabby::World::GetPrimaryCameraEntity();
         const auto& camera = cameraEntity.GetComponent<Tabby::CameraComponent>().Camera;
         const Tabby::Matrix4& cameraProjection = camera.GetProjection();
+        if (camera.GetProjectionType() == Tabby::Camera::ProjectionType::Perspective)
+            ImGuizmo::SetOrthographic(false);
+        else
+            ImGuizmo::SetOrthographic(true);
+
+        ImGuizmo::SetDrawlist();
+
+        ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
         Tabby::Matrix4 cameraView = glm::inverse(cameraEntity.GetComponent<Tabby::TransformComponent>().GetTransform());
 
         // Entity transform
         auto& tc = selectedEntity.GetComponent<Tabby::TransformComponent>();
-        Tabby::Matrix4 transform = tc.GetTransform();
+        Tabby::Matrix4 transform = tc.GetWorldTransform();
 
         // Snapping
         bool snap = Tabby::Input::GetKey(Tabby::Key::LControl);
@@ -314,10 +319,10 @@ void Base::OnImGuiRender()
             Tabby::Vector3 translation, rotation, scale;
             Tabby::Math::DecomposeTransform(transform, (Tabby::Vector3&)translation, (Tabby::Vector3&)rotation, (Tabby::Vector3&)scale);
 
-            Tabby::Vector3 deltaRotation = rotation - tc.Rotation;
-            tc.LocalTranslation = translation;
-            tc.LocalRotation += deltaRotation;
-            tc.LocalScale = scale;
+            Tabby::Vector3 deltaRotation = Tabby::Math::RAD2DEG * rotation - tc.GetWorldRotation();
+            tc.position = translation;
+            tc.rotation += deltaRotation;
+            tc.scale = scale;
         }
     }
 
@@ -344,11 +349,11 @@ void Base::OnOverlayRender()
                 auto& tc = entity.GetComponent<Tabby::TransformComponent>();
                 auto& bc2d = entity.GetComponent<Tabby::BoxCollider2DComponent>();
 
-                Tabby::Vector3 translation = tc.Translation + Tabby::Vector3(bc2d.Offset, 0.001f);
+                Tabby::Vector3 translation = tc.GetWorldPosition() + Tabby::Vector3(bc2d.Offset, 0.001f);
                 Tabby::Vector3 scale = Tabby::Vector3(bc2d.Size * 2.0f, 1.0f);
 
                 Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), translation)
-                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
+                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
                     * glm::translate(Tabby::Matrix4(1.0f), Tabby::Vector3(bc2d.Offset, 0.001f))
                     * glm::scale(Tabby::Matrix4(1.0f), scale);
 
@@ -364,11 +369,11 @@ void Base::OnOverlayRender()
                 auto& tc = entity.GetComponent<Tabby::TransformComponent>();
                 auto& cc2d = entity.GetComponent<Tabby::CircleCollider2DComponent>();
 
-                Tabby::Vector3 translation = tc.Translation + Tabby::Vector3(cc2d.Offset, 0.001f);
-                Tabby::Vector3 scale = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f);
+                Tabby::Vector3 translation = tc.GetWorldPosition() + Tabby::Vector3(cc2d.Offset, 0.001f);
+                Tabby::Vector3 scale = (Tabby::Vector3&)tc.GetWorldScale() * Tabby::Vector3(cc2d.Radius * 2.0f);
 
-                Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.Translation)
-                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
+                Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.GetWorldPosition())
+                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
                     * glm::translate(Tabby::Matrix4(1.0f), Tabby::Vector3(cc2d.Offset, 0.001f))
                     * glm::scale(Tabby::Matrix4(1.0f), scale);
 
@@ -384,26 +389,26 @@ void Base::OnOverlayRender()
                 auto& tc = entity.GetComponent<Tabby::TransformComponent>();
                 auto& cc2d = entity.GetComponent<Tabby::CapsuleCollider2DComponent>();
 
-                Tabby::Vector3 translation1 = tc.Translation + Tabby::Vector3(cc2d.center1, 0.001f);
-                Tabby::Vector3 scale1 = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f);
-                Tabby::Matrix4 transform1 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.Translation)
-                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
+                Tabby::Vector3 translation1 = tc.GetWorldPosition() + Tabby::Vector3(cc2d.center1, 0.001f);
+                Tabby::Vector3 scale1 = (Tabby::Vector3&)tc.GetWorldScale() * Tabby::Vector3(cc2d.Radius * 2.0f);
+                Tabby::Matrix4 transform1 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.GetWorldPosition())
+                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
                     * glm::translate(Tabby::Matrix4(1.0f), Tabby::Vector3(cc2d.center1, 0.001f))
                     * glm::scale(Tabby::Matrix4(1.0f), scale1);
                 Tabby::Renderer2D::DrawCircle(transform1, Tabby::Vector4(0, 1, 0, 1), 0.1f);
 
-                Tabby::Vector3 translation2 = tc.Translation + Tabby::Vector3(cc2d.center2, 0.001f);
-                Tabby::Vector3 scale2 = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f);
-                Tabby::Matrix4 transform2 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.Translation)
-                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
+                Tabby::Vector3 translation2 = tc.GetWorldPosition() + Tabby::Vector3(cc2d.center2, 0.001f);
+                Tabby::Vector3 scale2 = (Tabby::Vector3&)tc.GetWorldScale() * Tabby::Vector3(cc2d.Radius * 2.0f);
+                Tabby::Matrix4 transform2 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.GetWorldPosition())
+                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
                     * glm::translate(Tabby::Matrix4(1.0f), Tabby::Vector3(cc2d.center2, 0.001f))
                     * glm::scale(Tabby::Matrix4(1.0f), scale2);
                 Tabby::Renderer2D::DrawCircle(transform2, Tabby::Vector4(0, 1, 0, 1), 0.1f);
 
-                Tabby::Vector3 translation3 = tc.Translation + Tabby::Vector3(cc2d.center2, 0.001f);
-                Tabby::Vector3 scale3 = (Tabby::Vector3&)tc.Scale * Tabby::Vector3(cc2d.Radius * 2.0f) * Tabby::Vector3(0.95f, 1.5f, 0.95f);
-                Tabby::Matrix4 transform3 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.Translation)
-                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
+                Tabby::Vector3 translation3 = tc.GetWorldPosition() + Tabby::Vector3(cc2d.center2, 0.001f);
+                Tabby::Vector3 scale3 = (Tabby::Vector3&)tc.GetWorldScale() * Tabby::Vector3(cc2d.Radius * 2.0f) * Tabby::Vector3(0.95f, 1.5f, 0.95f);
+                Tabby::Matrix4 transform3 = glm::translate(Tabby::Matrix4(1.0f), (Tabby::Vector3&)tc.GetWorldPosition())
+                    * glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f))
                     * glm::scale(Tabby::Matrix4(1.0f), scale3);
                 Tabby::Renderer2D::DrawRect(transform3, Tabby::Vector4(0, 1, 0, 1));
             }
@@ -417,8 +422,8 @@ void Base::OnOverlayRender()
                 auto& tc = entity.GetComponent<Tabby::TransformComponent>();
                 auto& pc2d = entity.GetComponent<Tabby::PolygonCollider2DComponent>();
 
-                Tabby::Matrix4 rotation = glm::toMat4(glm::quat(glm::radians((glm::vec3)tc.Rotation)));
-                Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), (glm::vec3)tc.Translation) * rotation * glm::scale(Tabby::Matrix4(1.0f), (glm::vec3)tc.Scale);
+                Tabby::Matrix4 rotation = glm::toMat4(glm::quat(glm::radians((glm::vec3)tc.GetWorldRotation())));
+                Tabby::Matrix4 transform = glm::translate(Tabby::Matrix4(1.0f), (glm::vec3)tc.GetWorldPosition()) * rotation * glm::scale(Tabby::Matrix4(1.0f), (glm::vec3)tc.GetWorldScale());
 
                 for (int i = 0; i < pc2d.Points.size(); i++) {
 
@@ -448,14 +453,14 @@ void Base::OnOverlayRender()
                 auto& tc = entity.GetComponent<Tabby::TransformComponent>();
                 auto& sc2d = entity.GetComponent<Tabby::SegmentCollider2DComponent>();
 
-                Tabby::Vector3 point1 = tc.Translation + Tabby::Vector3(sc2d.point1, 0.001f);
-                Tabby::Vector3 point2 = tc.Translation + Tabby::Vector3(sc2d.point2, 0.001f);
+                Tabby::Vector3 point1 = tc.GetWorldPosition() + Tabby::Vector3(sc2d.point1, 0.001f);
+                Tabby::Vector3 point2 = tc.GetWorldPosition() + Tabby::Vector3(sc2d.point2, 0.001f);
 
                 // Apply rotation to both endpoints
-                Tabby::Matrix4 rotationMatrix = glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.Rotation.z, Tabby::Vector3(0.0f, 0.0f, 1.0f));
+                Tabby::Matrix4 rotationMatrix = glm::rotate(Tabby::Matrix4(1.0f), Tabby::Math::DEG2RAD * tc.GetWorldRotation().z, Tabby::Vector3(0.0f, 0.0f, 1.0f));
 
-                point1 = tc.Translation + Tabby::Vector3(rotationMatrix * Tabby::Vector4(sc2d.point1, 0.0f, 0.0f));
-                point2 = tc.Translation + Tabby::Vector3(rotationMatrix * Tabby::Vector4(sc2d.point2, 0.0f, 0.0f));
+                point1 = tc.GetWorldPosition() + Tabby::Vector3(rotationMatrix * Tabby::Vector4(sc2d.point1, 0.0f, 0.0f));
+                point2 = tc.GetWorldPosition() + Tabby::Vector3(rotationMatrix * Tabby::Vector4(sc2d.point2, 0.0f, 0.0f));
 
                 // Draw the line
                 Tabby::Renderer2D::DrawLine(point1, point2, Tabby::Vector4(0, 1, 0, 1));
