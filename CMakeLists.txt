@@ -1,12 +1,59 @@
 cmake_minimum_required(VERSION 3.20)
-project(Example-App)
+project(game)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_VERBOSE_MAKEFILE 0) # Enable for more verbose CMake output
 
-if (WIN32)
-    cmake_policy(SET CMP0091 NEW)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-endif ()
+###################################################################
+# Local variables
+###################################################################
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(PROJECT_SRC_DIR "src")
+set(PROJECT_VENDOR_DIR "vendor")
+set(PROJECT_ASSETS_DIR "${CMAKE_CURRENT_LIST_DIR}/assets")
 
-add_subdirectory(client)
+macro(append_linker_flags FLAGS)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
+endmacro()
+###################################################################
+# Target sources and create executable
+###################################################################
+file(GLOB_RECURSE PROJECT_SOURCES
+        "${PROJECT_SRC_DIR}/*.h"
+        "${PROJECT_SRC_DIR}/*.cpp"
+        )
+
+list(APPEND PROJECT_SOURCES
+        )
+
+if (ANDROID)
+    add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
+else()
+    add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+endif()
+
+set(TB_HEADLESS OFF CACHE BOOL "Enable headless mode" FORCE)
+set(TB_NETWORKING ON CACHE BOOL "Enable networking" FORCE)
+
+target_include_directories(${PROJECT_NAME} PUBLIC ../tabby/src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SRC_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_ASSETS_DIR})
+
+if (NOT TARGET tabby)
+add_subdirectory(../tabby ./tabby)
+endif()
+
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        tabby
+        tabby_flags
+        )
+
+add_custom_target(copy_assets_client
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_ASSETS_DIR} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets
+        )
+
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -DDEBUG -DTB_DEBUG=1")
+endif()
+
+add_dependencies(${PROJECT_NAME} copy_assets_client)

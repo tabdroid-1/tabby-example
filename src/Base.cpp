@@ -2,6 +2,8 @@
 #include <MapLoader.h>
 #include <Resources.h>
 #include <Components.h>
+#include <Networking/Server.h>
+#include <Networking/Client.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -32,87 +34,22 @@ void Base::OnAttach()
     m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
 
     Tabby::World::Init();
+
+    for (int i = 0; i < Tabby::Application::GetSpecification().CommandLineArgs.Count; i++) {
+        if (!strcmp(Tabby::Application::GetSpecification().CommandLineArgs.Args[i], "-server")) {
+            Server::Init();
+            break;
+        } else if (!strcmp(Tabby::Application::GetSpecification().CommandLineArgs.Args[i], "-client")) {
+            Client::Init();
+            break;
+        }
+    }
+
     Tabby::Application::GetWindow().SetVSync(false);
 
     MapLoader::Parse("scenes/test_map.gltf");
 
     auto& data = Tabby::World::AddResource<PlayerInputData>();
-
-    Tabby::World::AddSystem(Tabby::Schedule::Update, [](entt::registry&) {
-        std::vector<Tabby::TransformComponent> spawnpoints;
-        auto spawnpointView = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, App::SpawnpointComponent>();
-        for (auto entity : spawnpointView) {
-            auto [tc, sc] = spawnpointView.get<Tabby::TransformComponent, App::SpawnpointComponent>(entity);
-            if (sc.entityName == "Player")
-                spawnpoints.push_back(tc);
-        }
-
-        auto view = Tabby::World::GetAllEntitiesWith<Tabby::Rigidbody2DComponent, App::PlayerComponent>();
-        for (auto entity : view) {
-            auto& rb = Tabby::Entity(entity).GetComponent<Tabby::Rigidbody2DComponent>();
-            if (Tabby::Input::GetKey(Tabby::Key::B)) {
-                rb.SetVelocity({ 0.0f, 0.1f });
-            }
-
-            if (Tabby::Input::GetKeyDown(Tabby::Key::M)) {
-                const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
-                auto& tr = Tabby::Entity(entity).GetComponent<Tabby::TransformComponent>();
-                tr.position = spawnpoint.position;
-                tr.rotation = spawnpoint.rotation;
-                tr.scale = spawnpoint.scale;
-            }
-        }
-    });
-
-    Tabby::World::AddSystem(Tabby::Schedule::Startup, [](entt::registry&) {
-        std::vector<Tabby::TransformComponent> spawnpoints;
-        auto view = Tabby::World::GetAllEntitiesWith<Tabby::TransformComponent, App::SpawnpointComponent>();
-        for (auto entity : view) {
-            auto [tc, sc] = view.get<Tabby::TransformComponent, App::SpawnpointComponent>(entity);
-            if (sc.entityName == "Player")
-                spawnpoints.push_back(tc);
-        }
-
-        const auto spawnpoint = spawnpoints[Tabby::Random::Range(0, spawnpoints.size())];
-
-        Tabby::Entity DynamicEntity = Tabby::World::CreateEntity("Player");
-
-        auto& tr = DynamicEntity.GetComponent<Tabby::TransformComponent>();
-        tr.position = spawnpoint.position;
-        tr.rotation = spawnpoint.rotation;
-        tr.scale = spawnpoint.scale;
-
-        auto& sc = DynamicEntity.AddComponent<Tabby::SpriteRendererComponent>();
-        sc.Texture = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
-        DynamicEntity.AddComponent<App::PlayerComponent>();
-        auto& rb = DynamicEntity.AddComponent<Tabby::Rigidbody2DComponent>();
-        rb.Type = Tabby::Rigidbody2DComponent::BodyType::Dynamic;
-        rb.OnCollisionEnterCallback = [](Tabby::Collision a) {
-            TB_INFO("Enter: {}", a.CollidedEntity.GetName());
-        };
-        rb.OnCollisionExitCallback = [](Tabby::Collision a) {
-            TB_INFO("Exit: {}", a.CollidedEntity.GetName());
-        };
-        auto& bc = DynamicEntity.AddComponent<Tabby::BoxCollider2DComponent>();
-        bc.Size = { 2.0f, 0.5f };
-
-        auto& tc = DynamicEntity.AddComponent<Tabby::TextComponent>();
-        tc.TextString = "Player";
-
-        auto& asc = DynamicEntity.AddComponent<Tabby::AudioSourceComponent>();
-        Tabby::AssetHandle audioHandle = Tabby::AssetManager::LoadAssetSource("audio/sunflower-street-mono.wav");
-        asc.SetAudio(audioHandle);
-        asc.SetLooping(true);
-        asc.Play();
-    });
-
-    {
-        auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
-        auto& cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
-        cc.Camera.SetOrthographicFarClip(10000);
-        cc.Camera.SetOrthographicSize(100);
-        cameraEntity.AddComponent<Tabby::AudioListenerComponent>();
-    }
 
     Tabby::World::OnStart();
 }
@@ -121,6 +58,8 @@ void Base::OnDetach()
 {
     TB_PROFILE_SCOPE();
 
+    Server::Shutdown();
+    Client::Shutdown();
     Tabby::World::OnStop();
 }
 
@@ -143,12 +82,11 @@ void Base::OnUpdate()
         Tabby::RenderCommand::Clear();
     }
 
-    TB_INFO("asdasdasd");
     // BROKEN?
     // m_Framebuffer->ClearAttachment(1, -1);
 
     Tabby::World::Update();
-#ifndef TB_HEADLESS
+#if !TB_HEADLESS
     OnOverlayRender();
 #endif // TB_HEADLESS
 

@@ -10,7 +10,6 @@
 #include <fastgltf/core.hpp>
 #include <fastgltf/types.hpp>
 #include <fastgltf/tools.hpp>
-#include "../vendor/tabby/vendor/fastgltf/deps/simdjson/simdjson.h"
 
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
