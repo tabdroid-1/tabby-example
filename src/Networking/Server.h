@@ -4,11 +4,16 @@
 #include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
 
+#include <Tabby.h>
+#include <steam/steamnetworkingsockets.h>
+#include <steam/isteamnetworkingutils.h>
+
 namespace App {
 
 class Server {
 public:
     struct Client {
+        Tabby::UUID wordId;
         std::string name;
     };
 
@@ -25,10 +30,7 @@ public:
         }
     }
 
-    void SendStringToClient(HSteamNetConnection conn, std::string str)
-    {
-        m_Interface->SendMessageToConnection(conn, str.c_str(), (uint32_t)strlen(str.c_str()), k_nSteamNetworkingSend_Reliable, nullptr);
-    }
+    void SendStringToClient(HSteamNetConnection conn, const std::string& str);
 
     void SendStringToAllClients(std::string str, HSteamNetConnection except = k_HSteamNetConnection_Invalid)
     {
@@ -44,8 +46,6 @@ public:
         m_Interface->SetConnectionName(hConn, nick.c_str());
     }
 
-    void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* pInfo);
-
     static void SteamNetConnectionStatusChangedCallback(SteamNetConnectionStatusChangedCallback_t* pInfo)
     {
         s_Instance->OnConnectionStatusChanged(pInfo);
@@ -54,6 +54,7 @@ public:
 private:
     Server();
     void ProcessMessage();
+    void OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t* pInfo);
 
 private:
     std::map<HSteamNetConnection, Client> m_Clients;

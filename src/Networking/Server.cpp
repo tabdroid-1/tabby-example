@@ -99,9 +99,9 @@ void Server::OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t
         m_Interface->CloseConnection(pInfo->m_hConn, 0, nullptr, false);
         message = m_Clients[pInfo->m_hConn].name + " has left the server.";
         SendStringToAllClients(message, pInfo->m_hConn);
-        m_Clients.erase(pInfo->m_hConn);
 
-        // TB_INFO("{}", message);
+        Tabby::World::DestroyEntityWithChildren(Tabby::World::GetEntityByUUID(m_Clients[pInfo->m_hConn].wordId));
+        m_Clients.erase(pInfo->m_hConn);
         break;
     }
 
@@ -149,9 +149,8 @@ void Server::OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t
         SetClientNick(pInfo->m_hConn, nick);
 
         // Create Player
-        {
-            // Player::Spawn(nick);
-        }
+        auto id = Player::Spawn(nick);
+        m_Clients[pInfo->m_hConn].wordId = id;
 
         break;
     }
@@ -167,48 +166,71 @@ void Server::OnConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t
 
 void Server::ProcessMessage()
 {
-    ISteamNetworkingMessage* pIncomingMsg = nullptr;
-    int numMsgs = m_Interface->ReceiveMessagesOnPollGroup(m_PollGroup, &pIncomingMsg, 1);
-    if (numMsgs < 0 || !pIncomingMsg) {
-        if (pIncomingMsg)
-            pIncomingMsg->Release();
-        return;
-    }
-    if (pIncomingMsg->m_cbSize < sizeof(MessageHeader)) {
-        std::cerr << "Received message too small to contain header!" << std::endl;
-        return;
-    }
+    ISteamNetworkingMessage* pIncomingMsg[16];
+    int numMsgs = m_Interface->ReceiveMessagesOnPollGroup(m_PollGroup, pIncomingMsg, 16);
 
-    const MessageHeader* header = reinterpret_cast<const MessageHeader*>(pIncomingMsg->m_pData);
-
-    // Process the message based on its type
-    switch (header->messageType) {
-    case MESSAGE_TYPE_INPUT: {
-        if (pIncomingMsg->m_cbSize < sizeof(MessageHeader) + sizeof(InputState)) {
-            std::cerr << "Received INPUT message with incorrect size!" << std::endl;
+    for (int i = 0; i < numMsgs; i++) {
+        if (numMsgs < 0 || !pIncomingMsg[i]) {
+            if (pIncomingMsg[i])
+                pIncomingMsg[i]->Release();
+            return;
+        }
+        if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader)) {
+            std::cerr << "Received message too small to contain header!" << std::endl;
             return;
         }
 
-        const InputState* inputState = reinterpret_cast<const InputState*>(static_cast<const char*>(pIncomingMsg->m_pData) + sizeof(MessageHeader));
-        TB_INFO("{}", inputState->move);
-        // ProcessInput(conn, *inputState);
-        break;
-    }
-    case MESSAGE_TYPE_CHAT: {
-        if (pIncomingMsg->m_cbSize < sizeof(MessageHeader) + sizeof(ChatMessage)) {
-            std::cerr << "Received CHAT message with incorrect size!" << std::endl;
-            return;
-        }
+        const MessageHeader* header = reinterpret_cast<const MessageHeader*>(pIncomingMsg[i]->m_pData);
 
-        const ChatMessage* chatMsg = reinterpret_cast<const ChatMessage*>(static_cast<const char*>(pIncomingMsg->m_pData) + sizeof(MessageHeader));
-        TB_INFO("{}", chatMsg->message);
-        break;
+        // Process the message based on its type
+        switch (header->messageType) {
+        case MESSAGE_TYPE_INPUT: {
+            if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader) + sizeof(PlayerInputState)) {
+                std::cerr << "Received INPUT message with incorrect size!" << std::endl;
+                return;
+            }
+
+            const PlayerInputState* inputState = reinterpret_cast<const PlayerInputState*>(static_cast<const char*>(pIncomingMsg[i]->m_pData) + sizeof(MessageHeader));
+
+            Player::Update(Tabby::World::GetEntityByUUID(m_Clients[pIncomingMsg[i]->GetConnection()].wordId), inputState);
+            break;
+        }
+        case MESSAGE_TYPE_CHAT: {
+            if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader) + sizeof(ChatMessage)) {
+                std::cerr << "Received CHAT message with incorrect size!" << std::endl;
+                return;
+            }
+
+            const ChatMessage* chatMsg = reinterpret_cast<const ChatMessage*>(static_cast<const char*>(pIncomingMsg[i]->m_pData) + sizeof(MessageHeader));
+            TB_INFO("{}", chatMsg->message);
+            break;
+        }
+        // Handle other message types similarly
+        default:
+            std::cerr << "Received unknown message type!" << std::endl;
+            break;
+        }
     }
-    // Handle other message types similarly
-    default:
-        std::cerr << "Received unknown message type!" << std::endl;
-        break;
-    }
+}
+
+void Server::SendStringToClient(HSteamNetConnection conn, const std::string& str)
+{
+
+    // Create and populate the message
+    MessageHeader header;
+    header.messageType = MessageType::MESSAGE_TYPE_CHAT;
+
+    ChatMessage chatMsg;
+    std::strncpy(chatMsg.message, str.c_str(), 256);
+    chatMsg.message[256] = '\0';
+
+    // Combine header and inputState into one message
+    char buffer[sizeof(MessageHeader) + sizeof(ChatMessage)];
+    memcpy(buffer, &header, sizeof(MessageHeader));
+    memcpy(buffer + sizeof(MessageHeader), &chatMsg, sizeof(ChatMessage));
+
+    // Send the message to the server
+    m_Interface->SendMessageToConnection(conn, buffer, sizeof(buffer), k_nSteamNetworkingSend_Reliable, nullptr);
 }
 
 }

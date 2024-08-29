@@ -33,12 +33,12 @@ endif()
 set(TB_HEADLESS OFF CACHE BOOL "Enable headless mode" FORCE)
 set(TB_NETWORKING ON CACHE BOOL "Enable networking" FORCE)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ../tabby/src)
+target_include_directories(${PROJECT_NAME} PUBLIC vendor/tabby/src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SRC_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_ASSETS_DIR})
 
 if (NOT TARGET tabby)
-add_subdirectory(../tabby ./tabby)
+add_subdirectory(vendor/tabby)
 endif()
 
 

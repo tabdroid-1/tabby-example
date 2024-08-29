@@ -128,14 +128,16 @@ void Client::SendInput()
     MessageHeader header;
     header.messageType = MESSAGE_TYPE_INPUT;
 
-    InputState inputState;
+    PlayerInputState inputState;
+    inputState.move = { 0.0f, 0.0f };
+    inputState.jump = false;
     inputState.sequenceNumber = ++m_CurrentInputSequenceNumber;
 
     if (Tabby::Input::GetKey(Tabby::Key::A))
-        inputState.move.x++;
+        inputState.move.x--;
 
     if (Tabby::Input::GetKey(Tabby::Key::D))
-        inputState.move.x--;
+        inputState.move.x++;
 
     if (Tabby::Input::GetKey(Tabby::Key::W))
         inputState.move.y++;
@@ -144,12 +146,60 @@ void Client::SendInput()
         inputState.move.y--;
 
     // Combine header and inputState into one message
-    char buffer[sizeof(MessageHeader) + sizeof(InputState)];
+    char buffer[sizeof(MessageHeader) + sizeof(PlayerInputState)];
     memcpy(buffer, &header, sizeof(MessageHeader));
-    memcpy(buffer + sizeof(MessageHeader), &inputState, sizeof(InputState));
+    memcpy(buffer + sizeof(MessageHeader), &inputState, sizeof(PlayerInputState));
 
     // Send the message to the server
     m_Interface->SendMessageToConnection(m_Connection, buffer, sizeof(buffer), k_nSteamNetworkingSend_Unreliable, nullptr);
+}
+
+void Client::ProcessMessage()
+{
+    ISteamNetworkingMessage* pIncomingMsg[16];
+    int numMsgs = m_Interface->ReceiveMessagesOnConnection(m_Connection, pIncomingMsg, 16);
+
+    for (int i = 0; i < numMsgs; i++) {
+        if (numMsgs < 0 || !pIncomingMsg[i]) {
+            if (pIncomingMsg[i])
+                pIncomingMsg[i]->Release();
+            return;
+        }
+        if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader)) {
+            std::cerr << "Received message too small to contain header!" << std::endl;
+            return;
+        }
+
+        const MessageHeader* header = reinterpret_cast<const MessageHeader*>(pIncomingMsg[i]->m_pData);
+
+        // Process the message based on its type
+        // switch (header->messageType) {
+        // // case MESSAGE_TYPE_INPUT: {
+        // //     if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader) + sizeof(PlayerInputState)) {
+        // //         std::cerr << "Received INPUT message with incorrect size!" << std::endl;
+        // //         return;
+        // //     }
+        // //
+        // //     const PlayerInputState* inputState = reinterpret_cast<const PlayerInputState*>(static_cast<const char*>(pIncomingMsg[i]->m_pData) + sizeof(MessageHeader));
+        // //
+        // //     Player::Update(Tabby::World::GetEntityByUUID(m_Clients[pIncomingMsg[i]->GetConnection()].wordId), inputState);
+        // //     break;
+        // // }
+        // case MESSAGE_TYPE_CHAT: {
+        if (pIncomingMsg[i]->m_cbSize < sizeof(MessageHeader) + sizeof(ChatMessage)) {
+            std::cerr << "Received CHAT message with incorrect size!" << std::endl;
+            return;
+        }
+        const ChatMessage* chatMsg = reinterpret_cast<const ChatMessage*>(static_cast<const char*>(pIncomingMsg[i]->m_pData) + sizeof(MessageHeader));
+        TB_INFO("{}", chatMsg->message);
+        //     break;
+        // }
+        // // Handle other message types similarly
+        // default:
+        //     std::cerr << "Received unknown message type!" << std::endl;
+        //     break;
+        // }
+    }
 }
 
 }

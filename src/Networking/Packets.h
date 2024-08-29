@@ -14,20 +14,32 @@ struct MessageHeader {
     uint16_t messageType;
 };
 
+// Server sends
+struct PlayerJoinPacket {
+    Tabby::UUID id;
+    std::string name;
+    Tabby::Vector2 position;
+    float rotation;
+};
+
+// Server sends
 struct PlayerStatePacket {
+    Tabby::UUID id;
     Tabby::Vector2 velocity;
     Tabby::Vector2 position;
     float angularVelocity;
     float rotation;
 };
 
-struct InputState {
+// Client and server sends
+struct ChatMessage {
+    char message[256];
+};
+
+// Client sends
+struct PlayerInputState {
     Tabby::Vector2 move;
     bool jump;
     uint32_t sequenceNumber; // to track input order
-};
-
-struct ChatMessage {
-    std::string message; // Example chat message structure
 };
 }
