@@ -2,8 +2,6 @@
 #include <MapLoader.h>
 #include <Resources.h>
 #include <Components.h>
-#include <Networking/Server.h>
-#include <Networking/Client.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -35,16 +33,6 @@ void Base::OnAttach()
 
     Tabby::World::Init();
 
-    for (int i = 0; i < Tabby::Application::GetSpecification().CommandLineArgs.Count; i++) {
-        if (!strcmp(Tabby::Application::GetSpecification().CommandLineArgs.Args[i], "-server")) {
-            Server::Init();
-            break;
-        } else if (!strcmp(Tabby::Application::GetSpecification().CommandLineArgs.Args[i], "-client")) {
-            Client::Init();
-            break;
-        }
-    }
-
     {
         auto cameraEntity = Tabby::World::CreateEntity("cameraEntity");
         auto& cc = cameraEntity.AddComponent<Tabby::CameraComponent>();
@@ -66,8 +54,6 @@ void Base::OnDetach()
 {
     TB_PROFILE_SCOPE();
 
-    Server::Shutdown();
-    Client::Shutdown();
     Tabby::World::OnStop();
 }
 

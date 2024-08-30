@@ -16,11 +16,4 @@ struct SpawnpointComponent {
     }
 };
 
-struct PlayerComponent {
-    bool asd;
-
-    PlayerComponent() = default;
-    PlayerComponent(const PlayerComponent&) = default;
-};
-
 }

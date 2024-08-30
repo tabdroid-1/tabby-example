@@ -4,33 +4,19 @@
 
 namespace App {
 
+class PlayerState;
+
 class PlayerStateMachine {
 public:
-    Tabby::Shared<PlayerState> CurrentState;
+    PlayerStateMachine();
+    void Initialize(PlayerState* startingState);
+    void ChangeState(PlayerState* newState);
 
-    void Initialize(PlayerState startingState)
-    {
-        CurrentState = startingState;
-        CurrentState->Enter();
-    }
+    void CallOnBodyEnter(Tabby::Collision a);
+    void CallOnBodyExit(Tabby::Collision a);
 
-    void ChangeState(PlayerState newState)
-    {
-        CurrentState->Exit();
-        CurrentState = newState;
-        GD.Print("Player State: " + newState.animName + "State Start Time: " + CurrentState.startTime);
-        CurrentState->Enter();
-    }
-
-    void CallOnBodyEnter(Tabby::Collision a)
-    {
-        CurrentState->OnBodyEnter(a);
-    }
-
-    void CallOnBodyExit(Tabby::Collision a)
-    {
-        CurrentState->OnBodyExit(a);
-    }
+private:
+    PlayerState* m_CurrentState;
 };
 
 }

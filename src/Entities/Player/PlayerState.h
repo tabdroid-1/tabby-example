@@ -1,37 +1,25 @@
 #pragma once
-#include <Entities/Player/PlayerStateMachine.h>
+#include <Entities/Player/PlayerData.h>
 #include <Entities/Player/Player.h>
-
-#include <Tabby.h>
 
 namespace App {
 
-class PlayerState {
-    PlayerState(Player player, PlayerStateMachine stateMachine, PlayerData playerData, string animName, bool playOnInit)
-    {
-        this->player = player;
-        this->stateMachine = stateMachine;
-        this->playerData = playerData;
-        this->animName = animName;
-        _playOnInit = playOnInit;
-    }
+class PlayerStateMachine;
 
-    PlayerState(Player player, PlayerStateMachine stateMachine, PlayerData playerData, string animName)
-    {
-        this.player = player;
-        this.stateMachine = stateMachine;
-        this.playerData = playerData;
-        this.animName = animName;
-    }
+class PlayerState {
+public:
+    PlayerState(Player player, PlayerStateMachine* stateMachine, PlayerData playerData, std::string animName, bool playOnInit);
+
+    PlayerState(Player player, PlayerStateMachine* stateMachine, PlayerData playerData, std::string animName);
 
     virtual void Enter()
     {
-        DoChecks(0.16d);
-        startTime = Time.GetUnixTimeFromSystem();
+        DoChecks(0.16f);
+        startTime = Tabby::Time::GetTime();
         isAnimationFinished = false;
         isExitingState = false;
-        if (_playOnInit)
-            player.Anim.Play(animName);
+        // if (_playOnInit)
+        //     player.Anim.Play(animName);
     }
 
     virtual void Exit()
@@ -52,11 +40,11 @@ class PlayerState {
     {
     }
 
-    virtual void OnBodyEnter(Node node)
+    virtual void OnBodyEnter(Tabby::Collision a)
     {
     }
 
-    virtual void OnBodyExit(Node node)
+    virtual void OnBodyExit(Tabby::Collision a)
     {
     }
 
@@ -65,9 +53,9 @@ class PlayerState {
     virtual void AnimationFinishTrigger() { isAnimationFinished = true; }
 
 protected:
-    Tabby::Shared<PlayerStateMachine> stateMachine;
-    Tabby::Shared<PlayerData> playerData;
-    Tabby::Shared<Player> player;
+    PlayerStateMachine* stateMachine;
+    PlayerData playerData;
+    Player player;
 
     bool isAnimationFinished;
     bool isExitingState;
@@ -76,8 +64,9 @@ private:
     double startTime;
     std::string animName;
 
-    // This is for states with multiple animations. User can manually set animation in code and not get "animation doesn't exist" error in editor.
-    bool _playOnInit = true;
+    bool playOnInit = true;
+
+    friend class PlayerStateMachine;
 };
 
 }
