@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.20)
-project(game)
+project(game
+	VERSION 0.0.1
+    DESCRIPTION "Tabby engine example"
+	HOMEPAGE_URL "https://github.com/tabdroid-1/tabby-example"
+    LANGUAGES CXX
+)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(APPLE)
+    message(STATUS "Including Objective-C++ for APPLE")
+    enable_language(OBJC)
+    enable_language(OBJCXX)
+    set(CMAKE_OBJCXX_STANDARD 14)
+    set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+    set(CMAKE_OBJCXX_EXTENSIONS OFF)
+endif()
 
 ###################################################################
 # Local variables
@@ -31,7 +49,7 @@ else()
 endif()
 
 set(TB_HEADLESS OFF CACHE BOOL "Enable headless mode" FORCE)
-set(TB_NETWORKING ON CACHE BOOL "Enable networking" FORCE)
+set(TB_NETWORKING OFF CACHE BOOL "Enable networking" FORCE)
 
 target_include_directories(${PROJECT_NAME} PUBLIC vendor/tabby/src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SRC_DIR})

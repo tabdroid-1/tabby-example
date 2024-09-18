@@ -22,8 +22,8 @@ Tabby::Application* Tabby::CreateApplication(Tabby::ApplicationCommandLineArgs a
     spec.Name = "A winfow";
     spec.WorkingDirectory = "assets";
     spec.CommandLineArgs = args;
-    spec.Width = 1980;
-    spec.Height = 1080;
+    spec.Width = 1440;
+    spec.Height = 900;
     spec.MinWidth = 198;
     spec.MinHeight = 108;
     spec.VSync = false;
