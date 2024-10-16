@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tabby.h>
+#include <Tabby/World/WorldRenderer.h>
 
 namespace App {
 
@@ -28,6 +29,7 @@ private:
     Tabby::Vector2 m_ViewportSize = { 1280.0f, 720.0f };
     Tabby::Vector2 m_ViewportBounds[2];
     bool m_ViewportFocused = false, m_ViewportHovered = false;
+    Tabby::Shared<Tabby::WorldRenderer> m_WorldRenderer;
 };
 
 }

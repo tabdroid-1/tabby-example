@@ -3,6 +3,8 @@
 #include <Resources.h>
 #include <Components.h>
 
+#include <Tabby/World/WorldRenderer.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -101,6 +103,8 @@ void Base::OnAttach()
                 primitive.primitive->GetMaterial()->UploadData("texSampler", 0, Tabby::AssetManager::GetMissingTexture(), Tabby::Renderer::GetNearestSampler());
         }
     }
+
+    m_WorldRenderer = Tabby::WorldRenderer::Create();
 }
 
 void Base::OnDetach()
@@ -116,25 +120,7 @@ void Base::OnDetach()
 
 void Base::OnUpdate()
 {
-    Tabby::World::OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-
-    // if (Tabby::FramebufferSpecification spec = m_Framebuffer->GetSpecification();
-    //     m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
-    //     (spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y)) {
-    //     m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-    // }
-    //
     // Tabby::Renderer2D::ResetStats();
-    //
-    // m_Framebuffer->Bind();
-    // {
-    //     TB_PROFILE_SCOPE_NAME("Renderer Prep");
-    //     Tabby::RenderCommand::SetClearColor({ 0.5f, 0.5f, 0.5f, 1 });
-    //     Tabby::RenderCommand::Clear();
-    // }
-
-    // BROKEN?
-    // m_Framebuffer->ClearAttachment(1, -1);
 
     static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -161,15 +147,15 @@ void Base::OnUpdate()
         if (!mesh.second)
             continue;
 
+        m_WorldRenderer->BeginScene();
         Tabby::Renderer::RenderTasks(mesh.second, { Tabby::MaterialData("ubo", 0, ubo, sizeof(Uniform)) });
+        m_WorldRenderer->EndScene();
     }
 
     Tabby::World::Update();
 #if !TB_HEADLESS
     OnOverlayRender();
 #endif // TB_HEADLESS
-
-    // m_Framebuffer->Unbind();
 
     if (Tabby::Input::GetKeyDown(Tabby::Key::Q))
         m_GizmoType = -1;
