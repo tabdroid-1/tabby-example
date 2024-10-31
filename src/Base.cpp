@@ -3,8 +3,6 @@
 #include <Resources.h>
 #include <Components.h>
 
-#include <Tabby/World/WorldRenderer.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -72,14 +70,22 @@ void Base::OnAttach()
     sampler_spec.lod_bias = 0.0f;
     sampler_spec.anisotropic_filtering_level = 16;
 
-    Tabby::ShaderSpecification shader_spec = Tabby::ShaderSpecification::Default();
-    shader_spec.culling_mode = Tabby::PipelineCullingMode::NONE;
-    shader_spec.output_attachments_formats = { Tabby::ImageFormat::RGBA32_UNORM };
-
-    Tabby::ShaderLibrary::LoadShader(shader_spec, "shaders/vulkan/test.glsl");
+    Tabby::ShaderLibrary::LoadShader("shaders/vulkan/test.glsl");
     auto shader = Tabby::ShaderLibrary::GetShader("test.glsl");
-    meshes = Tabby::GLTFLoader::Parse("scenes/test_map.gltf");
-    // meshes = Tabby::GLTFLoader::Parse("scenes/sponza-small/sponza.gltf");
+    // meshes = Tabby::GLTFLoader::Parse("scenes/test_map.gltf");
+
+    Tabby::GLTFParseSpecification gltf_spec;
+    gltf_spec.filePath = "scenes/sponza-small/sponza.gltf";
+    gltf_spec.create_entity_from_mesh = true;
+    meshes = Tabby::GLTFLoader::Parse(gltf_spec);
+
+    Tabby::PipelineSpecification pipeline_spec = Tabby::PipelineSpecification::Default();
+    pipeline_spec.shader = shader;
+    pipeline_spec.render_pass = Tabby::Renderer::GetRenderPipelineRenderPass();
+    pipeline_spec.culling_mode = Tabby::PipelineCullingMode::NONE;
+    pipeline_spec.output_attachments_formats = { Tabby::ImageFormat::RGBA32_UNORM };
+
+    Tabby::Shared<Tabby::Pipeline> pipeline = Tabby::Pipeline::Create(pipeline_spec);
 
     for (auto& data : meshes.mesh_data) {
         if (!data.primitives.size())
@@ -87,7 +93,7 @@ void Base::OnAttach()
 
         Tabby::MaterialSpecification mat_spec;
         mat_spec.name = "test_mat";
-        mat_spec.shader = shader;
+        mat_spec.pipeline = pipeline;
 
         for (auto primitive : data.primitives) {
             Tabby::Shared<Tabby::Material> material = Tabby::Material::Create(mat_spec);
@@ -104,7 +110,9 @@ void Base::OnAttach()
         }
     }
 
-    m_WorldRenderer = Tabby::WorldRenderer::Create();
+    Tabby::Entity camera = Tabby::World::CreateEntity("Camera");
+    auto& camera_camera_component = camera.AddComponent<Tabby::CameraComponent>();
+    // camera_camera_component.
 }
 
 void Base::OnDetach()
@@ -120,43 +128,9 @@ void Base::OnDetach()
 
 void Base::OnUpdate()
 {
-    // Tabby::Renderer2D::ResetStats();
-
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-    static Uniform* ubo;
-
-    if (!ubo)
-        ubo = new Uniform();
-
-    ubo->model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo->model = glm::rotate(ubo->model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    ubo->model = glm::scale(ubo->model, { 3.0f, 3.0f, 3.0f });
-    ubo->model = glm::translate(ubo->model, { 0.0f, 0.0f, -10.0f });
-    ubo->view = Tabby::Matrix4(1.0f);
-    ubo->view = glm::translate(ubo->view, { 0.0f, -0.5f, 0.0f });
-    // ubo.view = glm::lookAt(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo->view = glm::rotate(ubo->view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    ubo->proj = glm::perspective(glm::radians(45.0f), Tabby::Application::GetWindow().GetWidth() / (float)Tabby::Application::GetWindow().GetHeight(), 0.1f, 1000.0f);
-    ubo->proj[1][1] *= -1;
-
-    m_WorldRenderer->BeginScene();
-    for (auto& mesh : meshes.meshes) {
-        if (!mesh.second)
-            continue;
-
-        Tabby::Renderer::RenderTasks(mesh.second, { Tabby::MaterialData("ubo", 0, ubo, sizeof(Uniform)) });
-    }
-
-    m_WorldRenderer->EndScene();
-
+    Tabby::World::OnViewportResize(Tabby::Application::GetWindow().GetWidth(), Tabby::Application::GetWindow().GetHeight());
     Tabby::World::Update();
-#if !TB_HEADLESS
     OnOverlayRender();
-#endif // TB_HEADLESS
 
     if (Tabby::Input::GetKeyDown(Tabby::Key::Q))
         m_GizmoType = -1;
@@ -270,7 +244,7 @@ void Base::OnImGuiRender()
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 
-    Tabby::UI::RenderImage(m_WorldRenderer->GetFinalImage(), Tabby::Renderer::GetLinearSampler(), ImVec2 { m_ViewportSize.x, m_ViewportSize.y });
+    Tabby::UI::RenderImage(Tabby::Renderer::GetRenderPipelineFinalImage(), Tabby::Renderer::GetLinearSampler(), ImVec2 { m_ViewportSize.x, m_ViewportSize.y });
 
     ImGui::End();
     ImGui::PopStyleVar();
