@@ -1,4 +1,4 @@
 [submodule "vendor/tabby"]
 	path = vendor/tabby
 	url = https://github.com/tabdroid-1/tabby-engine.git
-    branch = multiapi
+	branch = main
