@@ -2,7 +2,10 @@
 // #include <MapLoader.h>
 #include <Resources.h>
 #include <Components.h>
+#include <Tabby/Renderer/ShaderLibrary.h>
 
+#include <bx/math.h>
+#include <bx/timer.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -15,10 +18,56 @@ float fps = 0;
 
 Tabby::GLTFLoader::GLTFData meshes;
 
-struct Uniform {
-    Tabby::Matrix4 model;
-    Tabby::Matrix4 view;
-    Tabby::Matrix4 proj;
+struct PosColorVertex {
+    float m_x;
+    float m_y;
+    float m_z;
+    uint32_t m_abgr;
+
+    static void init()
+    {
+        ms_layout
+            .begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+            .end();
+    };
+
+    static bgfx::VertexLayout ms_layout;
+};
+
+bgfx::VertexLayout PosColorVertex::ms_layout;
+
+static PosColorVertex s_cubeVertices[] = {
+    { -1.0f, 1.0f, 1.0f, 0xff000000 },
+    { 1.0f, 1.0f, 1.0f, 0xff0000ff },
+    { -1.0f, -1.0f, 1.0f, 0xff00ff00 },
+    { 1.0f, -1.0f, 1.0f, 0xff00ffff },
+    { -1.0f, 1.0f, -1.0f, 0xffff0000 },
+    { 1.0f, 1.0f, -1.0f, 0xffff00ff },
+    { -1.0f, -1.0f, -1.0f, 0xffffff00 },
+    { 1.0f, -1.0f, -1.0f, 0xffffffff },
+};
+
+static const uint16_t s_cubeTriStrip[] = {
+    0,
+    1,
+    2,
+    3,
+    7,
+    1,
+    5,
+    0,
+    4,
+    2,
+    6,
+    7,
+    4,
+    5,
+};
+
+static const uint16_t s_cubePoints[] = {
+    0, 1, 2, 3, 4, 5, 6, 7
 };
 
 namespace App {
@@ -28,16 +77,11 @@ Base::Base()
 {
 }
 
+int64_t m_TimeOffset;
+
 void Base::OnAttach()
 {
     TB_PROFILE_SCOPE();
-
-    // Tabby::FramebufferSpecification fbSpec;
-    // fbSpec.Attachments = { Tabby::FramebufferTextureFormat::RGBA8, Tabby::FramebufferTextureFormat::RED_INTEGER, Tabby::FramebufferTextureFormat::DEPTH24STENCIL8 };
-    // fbSpec.Width = 2560;
-    // fbSpec.Height = 1600;
-    // fbSpec.Samples = 1;
-    // m_Framebuffer = Tabby::Framebuffer::Create(fbSpec);
 
     Tabby::World::Init();
 
@@ -57,62 +101,92 @@ void Base::OnAttach()
 
     Tabby::World::OnStart();
 
-    auto image_asset_handle = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
+    /*auto image_asset_handle = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");*/
     // m_Image = Tabby::AssetManager::GetAsset<Tabby::Image>(image_asset_handle);
 
-    Tabby::ImageSamplerSpecification sampler_spec = {};
-    sampler_spec.min_filtering_mode = Tabby::SamplerFilteringMode::LINEAR;
-    sampler_spec.mag_filtering_mode = Tabby::SamplerFilteringMode::NEAREST;
-    sampler_spec.mipmap_filtering_mode = Tabby::SamplerFilteringMode::LINEAR;
-    sampler_spec.address_mode = Tabby::SamplerAddressMode::REPEAT;
-    sampler_spec.min_lod = 0.0f;
-    sampler_spec.max_lod = 1000.0f;
-    sampler_spec.lod_bias = 0.0f;
-    sampler_spec.anisotropic_filtering_level = 16;
+    /*Tabby::ShaderLibrary::LoadShader("shaders/vulkan/test.glsl");*/
+    /*auto shader = Tabby::ShaderLibrary::GetShader("test.glsl");*/
+    /*// meshes = Tabby::GLTFLoader::Parse("scenes/test_map.gltf");*/
 
-    Tabby::ShaderLibrary::LoadShader("shaders/vulkan/test.glsl");
-    auto shader = Tabby::ShaderLibrary::GetShader("test.glsl");
-    // meshes = Tabby::GLTFLoader::Parse("scenes/test_map.gltf");
-
-    Tabby::GLTFParseSpecification gltf_spec;
-    gltf_spec.filePath = "scenes/sponza-small/sponza.gltf";
-    gltf_spec.create_entity_from_mesh = true;
-    meshes = Tabby::GLTFLoader::Parse(gltf_spec);
-
-    Tabby::PipelineSpecification pipeline_spec = Tabby::PipelineSpecification::Default();
-    pipeline_spec.shader = shader;
-    pipeline_spec.render_pass = Tabby::Renderer::GetRenderPipelineRenderPass();
-    pipeline_spec.culling_mode = Tabby::PipelineCullingMode::NONE;
-    pipeline_spec.output_attachments_formats = { Tabby::ImageFormat::RGBA32_UNORM };
-
-    Tabby::Shared<Tabby::Pipeline> pipeline = Tabby::Pipeline::Create(pipeline_spec);
-
-    for (auto& data : meshes.mesh_data) {
-        if (!data.primitives.size())
-            continue;
-
-        Tabby::MaterialSpecification mat_spec;
-        mat_spec.name = "test_mat";
-        mat_spec.pipeline = pipeline;
-
-        for (auto primitive : data.primitives) {
-            Tabby::Shared<Tabby::Material> material = Tabby::Material::Create(mat_spec);
-
-            primitive.primitive->SetMaterial(material);
-            // for (auto& image : primitive.images) {
-            //     primitive.primitive->GetMaterial()->UploadData("texSampler", 0, image.second, Tabby::Renderer::GetNearestSampler());
-            // }
-
-            if (primitive.images.find("albedo") != primitive.images.end())
-                primitive.primitive->GetMaterial()->UploadData("texSampler", 0, primitive.images.find("albedo")->second, Tabby::Renderer::GetNearestSampler());
-            else
-                primitive.primitive->GetMaterial()->UploadData("texSampler", 0, Tabby::AssetManager::GetMissingTexture(), Tabby::Renderer::GetNearestSampler());
-        }
-    }
+    /*Tabby::GLTFParseSpecification gltf_spec;*/
+    /*gltf_spec.filePath = "scenes/sponza-small/sponza.gltf";*/
+    /*gltf_spec.create_entity_from_mesh = true;*/
+    /*meshes = Tabby::GLTFLoader::Parse(gltf_spec);*/
 
     Tabby::Entity camera = Tabby::World::CreateEntity("Camera");
     auto& camera_camera_component = camera.AddComponent<Tabby::CameraComponent>();
     // camera_camera_component.
+
+    Tabby::ImageSpecification image_spec = Tabby::ImageSpecification::Default();
+    image_spec.usage = Tabby::ImageUsage::RENDER_TARGET;
+    image_spec.format = bgfx::TextureFormat::Enum::BGRA8;
+    image_spec.extent = { Tabby::Application::GetWindow().GetWidth(), Tabby::Application::GetWindow().GetHeight() };
+
+    m_RenderTarget = Tabby::CreateShared<Tabby::Image>(image_spec);
+
+    image_spec.usage = Tabby::ImageUsage::DEPTH_BUFFER;
+    image_spec.format = bgfx::TextureFormat::Enum::D32F;
+    m_DepthBuffer = Tabby::CreateShared<Tabby::Image>(image_spec);
+
+    PosColorVertex::init();
+
+    std::string vertex_path;
+    std::string fragment_path;
+
+    // More ellegant way of loading shaders after dealing with shaderc(bgfx)
+    switch (bgfx::getRendererType()) {
+    case bgfx::RendererType::OpenGL:
+        TB_CORE_INFO("OPENGL");
+        vertex_path = "shaders/sources/mesh_shader/glsl/vs.sc.bin";
+        fragment_path = "shaders/sources/mesh_shader/glsl/fs.sc.bin";
+        break;
+    case bgfx::RendererType::OpenGLES:
+        TB_CORE_INFO("OPENGLES");
+        vertex_path = "shaders/sources/mesh_shader/essl/vs.sc.bin";
+        fragment_path = "shaders/sources/mesh_shader/essl/fs.sc.bin";
+        break;
+    case bgfx::RendererType::Vulkan:
+        TB_CORE_INFO("VULKAN");
+        vertex_path = "shaders/sources/mesh_shader/spv/vs.sc.bin";
+        fragment_path = "shaders/sources/mesh_shader/spv/fs.sc.bin";
+        break;
+    default:
+        break;
+    }
+
+    Tabby::ShaderLibrary::LoadShader("simple_mesh_shader", vertex_path, fragment_path);
+    m_ProgramHandle = Tabby::ShaderLibrary::GetShader("simple_mesh_shader");
+
+    m_TimeOffset = bx::getHPCounter();
+
+    m_GeometryViewSpecification = {
+        0, { m_RenderTarget }, m_DepthBuffer, m_ViewportSize, { 0, 0 }, { 0.0f, 0.0f, 0.0f, 1.0f }
+    };
+
+    Tabby::Renderer::SetViewTarget(m_GeometryViewSpecification);
+
+    Tabby::MeshSpecification mesh_spec;
+
+    mesh_spec.name = "CUBESSSS!";
+    mesh_spec.program_handle = m_ProgramHandle;
+    mesh_spec.vertex_buffer_handle = bgfx::createVertexBuffer(
+        bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), PosColorVertex::ms_layout);
+
+    mesh_spec.index_buffer_handle = bgfx::createIndexBuffer(
+        bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip)));
+
+    mesh_spec.state = 0
+        | BGFX_STATE_WRITE_R
+        | BGFX_STATE_WRITE_G
+        | BGFX_STATE_WRITE_B
+        | BGFX_STATE_WRITE_A
+        | BGFX_STATE_WRITE_Z
+        | BGFX_STATE_DEPTH_TEST_LESS
+        | BGFX_STATE_CULL_CW
+        | BGFX_STATE_MSAA
+        | BGFX_STATE_PT_TRISTRIP;
+
+    m_Mesh = Tabby::Mesh::Create(mesh_spec);
 }
 
 void Base::OnDetach()
@@ -121,9 +195,9 @@ void Base::OnDetach()
 
     Tabby::World::OnStop();
 
-    for (auto mesh : meshes.meshes) {
-        mesh.second->Destroy();
-    }
+    /*for (auto mesh : meshes.meshes) {*/
+    /*    mesh.second->Destroy();*/
+    /*}*/
 }
 
 void Base::OnUpdate()
@@ -132,14 +206,36 @@ void Base::OnUpdate()
     Tabby::World::Update();
     OnOverlayRender();
 
-    if (Tabby::Input::GetKeyDown(Tabby::Key::Q))
-        m_GizmoType = -1;
-    if (Tabby::Input::GetKeyDown(Tabby::Key::T))
-        m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
-    if (Tabby::Input::GetKeyDown(Tabby::Key::S))
-        m_GizmoType = ImGuizmo::OPERATION::SCALE;
-    if (Tabby::Input::GetKeyDown(Tabby::Key::R))
-        m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+    m_GeometryViewSpecification = {
+        0, { m_RenderTarget }, m_DepthBuffer, m_ViewportSize, { 0, 0 }, { 30, 30, 30, 255 }
+    };
+
+    Tabby::Renderer::SetViewTarget(m_GeometryViewSpecification);
+
+    float time = (float)((bx::getHPCounter() - m_TimeOffset) / double(bx::getHPFrequency()));
+
+    {
+        Tabby::Matrix4 view = Tabby::Matrix4(1.0f);
+        view = glm::translate(view, { 0.0f, -0.5f, 0.0f });
+        view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        Tabby::Matrix4 proj = glm::perspective(glm::radians(60.0f), m_GeometryViewSpecification.render_area.x / (float)m_GeometryViewSpecification.render_area.y, 0.1f, 1000.0f);
+        proj[1][1] *= -1;
+
+        Tabby::Renderer::SetViewMatrix(m_GeometryViewSpecification.view_id, view, proj);
+    }
+
+    for (uint32_t yy = 0; yy < 11; ++yy) {
+        for (uint32_t xx = 0; xx < 11; ++xx) {
+
+            Tabby::Matrix4 transform = Tabby::Matrix4(1);
+            transform = glm::translate(transform, { 0.0f, 5.0f, 0.0f });
+            transform = glm::rotate(transform, time * glm::radians(10.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+
+            // Set model matrix for rendering.
+            m_Mesh->SetTransform(transform);
+            Tabby::Renderer::DrawMesh(0, m_Mesh);
+        }
+    }
 
     fps = 1.0f / Tabby::Time::GetDeltaTime();
     TB_INFO("FPS: {0} \n\t\tDeltaTime: {1}", fps, Tabby::Time::GetDeltaTime());
@@ -153,13 +249,10 @@ void Base::OnImGuiRender()
 
     // Note: Switch this to true to enable dockspace
     static bool dockspaceOpen = false;
-    // static bool dockspaceOpen = true;
     static bool opt_fullscreen_persistant = true;
     bool opt_fullscreen = opt_fullscreen_persistant;
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-    // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-    // because it would be confusing to have two docking targets within each others.
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
     if (opt_fullscreen) {
         ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -172,15 +265,9 @@ void Base::OnImGuiRender()
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     }
 
-    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         window_flags |= ImGuiWindowFlags_NoBackground;
 
-    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-    // all active windows docked into it will lose their parent and become undocked.
-    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
     ImGui::PopStyleVar();
@@ -206,19 +293,53 @@ void Base::OnImGuiRender()
 
     ImGui::Begin("Stats");
 
-    // auto stats = Tabby::Renderer2D::GetStats();
-    // ImGui::Text("Renderer2D Stats:");
-    // ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-    // ImGui::Text("Quads: %d", stats.QuadCount);
-    // ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
-    // ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+    auto stats = bgfx::getStats();
+    ImGui::Text("Renderer Stats:");
+    ImGui::Text("Size: %d : %d", stats->width, stats->height);
+    ImGui::Text("Draws: %d ", stats->numDraw);
+    ImGui::Text("Views: %d ", stats->numViews);
+    ImGui::Text("Shaders: %d ", stats->numShaders);
+    ImGui::Text("Programs: %d ", stats->numPrograms);
+    ImGui::Text("Textures: %d ", stats->numTextures);
+    ImGui::Text("Uniforms: %d ", stats->numUniforms);
+    ImGui::Text("Computes: %d ", stats->numCompute);
+    ImGui::Text("Vertex buffers: %d ", stats->numVertexBuffers);
+    ImGui::Text("Vertex layouts: %d ", stats->numVertexLayouts);
+
+    ImGui::Text("CPU time begin: %ld ", stats->cpuTimeBegin);
+    ImGui::Text("CPU time end: %ld ", stats->cpuTimeEnd);
+    ImGui::Text("CPU time spent: %ld ", stats->cpuTimeEnd - stats->cpuTimeBegin);
+    ImGui::Text("Memory used: %ld ", stats->rtMemoryUsed);
+
+    ImGui::Text("GPU time begin: %ld ", stats->gpuTimeBegin);
+    ImGui::Text("GPU time end: %ld ", stats->gpuTimeEnd);
+    ImGui::Text("GPU time spent: %ld ", stats->gpuTimeEnd - stats->gpuTimeBegin);
+    ImGui::Text("GPU memory used: %ld ", stats->gpuMemoryUsed);
+
+    ImGui::NewLine();
+    ImGui::Text("View Stats:");
+    for (size_t i = 0; i < stats->numViews; i++) {
+        ImGui::Text("   View name: %s ", stats->viewStats[i].name);
+        ImGui::Text("   View ID: %i ", stats->viewStats[i].view);
+        ImGui::Text("   View CPU time begin: %li ", stats->viewStats[i].cpuTimeBegin);
+        ImGui::Text("   View CPU time end: %li ", stats->viewStats[i].cpuTimeEnd);
+        ImGui::Text("   View CPU time spent: %li ", stats->viewStats[i].cpuTimeEnd - stats->viewStats[i].cpuTimeBegin);
+
+        ImGui::Text("   View GPU time begin: %li ", stats->viewStats[i].gpuTimeBegin);
+        ImGui::Text("   View GPU time end: %li ", stats->viewStats[i].gpuTimeEnd);
+        ImGui::Text("   View GPU time spent: %li ", stats->viewStats[i].gpuTimeEnd - stats->viewStats[i].gpuTimeBegin);
+
+        ImGui::Text("   View GPU frame num: %u ", stats->viewStats[i].gpuFrameNum);
+
+        ImGui::Separator();
+    }
 
     ImGui::End();
 
     ImGui::Begin("Settings");
 
     ImGui::Text("FPS: %.2f", fps);
-    ImGui::DragFloat2("Size", glm::value_ptr(m_ViewportSize));
+    ImGui::Text("Viewport size: %d : %d", m_ViewportSize.x, m_ViewportSize.y);
     ImGui::Checkbox("Show physics colliders", &m_ShowPhysicsColliders);
 
     if (ImGui::Button("File Dialog Open(test)")) {
@@ -244,7 +365,8 @@ void Base::OnImGuiRender()
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 
-    Tabby::UI::RenderImage(Tabby::Renderer::GetRenderPipelineFinalImage(), Tabby::Renderer::GetLinearSampler(), ImVec2 { m_ViewportSize.x, m_ViewportSize.y });
+    ImGui::Image(m_RenderTarget->Raw().idx, ImVec2 { (float)m_ViewportSize.x, (float)m_ViewportSize.y }, ImVec2 { 0, 1 }, ImVec2 { 1, 0 });
+    /*Tabby::UI::RenderImage(Tabby::Renderer::GetRenderPipelineFinalImage(), Tabby::Renderer::GetLinearSampler(), ImVec2 { m_ViewportSize.x, m_ViewportSize.y });*/
 
     ImGui::End();
     ImGui::PopStyleVar();

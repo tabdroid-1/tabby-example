@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tabby.h>
+#include <Tabby/Renderer/Mesh.h>
 
 namespace App {
 
@@ -24,9 +25,16 @@ private:
     bool m_ShowPhysicsColliders = true;
     int m_GizmoType = -1;
 
+    Tabby::ViewSpecification m_GeometryViewSpecification;
+    Tabby::Shared<Tabby::Image> m_RenderTarget;
+    Tabby::Shared<Tabby::Image> m_DepthBuffer;
+
+    Tabby::Shared<Tabby::Mesh> m_Mesh;
+    bgfx::ProgramHandle m_ProgramHandle;
+
     // Tabby::Shared<Tabby::Framebuffer> m_Framebuffer;
-    Tabby::Vector2 m_ViewportSize = { 1280.0f, 720.0f };
-    Tabby::Vector2 m_ViewportBounds[2];
+    Tabby::UIntVector2 m_ViewportSize = { 1280.0f, 720.0f };
+    Tabby::UIntVector2 m_ViewportBounds[2];
     bool m_ViewportFocused = false, m_ViewportHovered = false;
 };
 

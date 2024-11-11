@@ -55,10 +55,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC vendor/tabby/src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SRC_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_ASSETS_DIR})
 
+
 if (NOT TARGET tabby)
 add_subdirectory(vendor/tabby)
 endif()
-
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         tabby
@@ -75,3 +75,24 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 add_dependencies(${PROJECT_NAME} copy_assets_client)
+
+get_filename_component(<out-var> assets/shaders/sources/mesh_shader REALPATH BASE_DIR "")
+
+tabby_compile_shader(
+    TYPE VERTEX
+    SHADERS assets/shaders/sources/mesh_shader/vs.sc
+    VARYING_DEF assets/shaders/sources/mesh_shader/varying.def.sc
+    OUTPUT_DIR assets/shaders/sources/mesh_shader
+    OUT_FILES_VAR GENERATED_SHADER_OUTPUTS
+    INCLUDE_DIRS assets/shaders/sources/common.sh
+    AS_HEADERS FALSE
+)
+
+tabby_compile_shader(
+    TYPE FRAGMENT  
+    SHADERS assets/shaders/sources/mesh_shader/fs.sc
+    VARYING_DEF assets/shaders/sources/mesh_shader/varying.def.sc
+    OUTPUT_DIR assets/shaders/sources/mesh_shader
+    OUT_FILES_VAR GENERATED_SHADER_OUTPUTS
+    INCLUDE_DIRS assets/shaders/sources/common.sh
+)
