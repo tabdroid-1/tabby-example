@@ -101,8 +101,8 @@ void Base::OnAttach()
 
     Tabby::World::OnStart();
 
-    /*auto image_asset_handle = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");*/
-    // m_Image = Tabby::AssetManager::GetAsset<Tabby::Image>(image_asset_handle);
+    auto image_asset_handle = Tabby::AssetManager::LoadAssetSource("textures/Tabby.png");
+    m_Image = Tabby::AssetManager::GetAsset<Tabby::Image>(image_asset_handle);
 
     /*Tabby::ShaderLibrary::LoadShader("shaders/vulkan/test.glsl");*/
     /*auto shader = Tabby::ShaderLibrary::GetShader("test.glsl");*/
@@ -137,18 +137,18 @@ void Base::OnAttach()
     switch (bgfx::getRendererType()) {
     case bgfx::RendererType::OpenGL:
         TB_CORE_INFO("OPENGL");
-        vertex_path = "shaders/sources/mesh_shader/glsl/vs.sc.bin";
-        fragment_path = "shaders/sources/mesh_shader/glsl/fs.sc.bin";
+        vertex_path = "shaders/mesh_shader/glsl/vs.sc.bin";
+        fragment_path = "shaders/mesh_shader/glsl/fs.sc.bin";
         break;
     case bgfx::RendererType::OpenGLES:
         TB_CORE_INFO("OPENGLES");
-        vertex_path = "shaders/sources/mesh_shader/essl/vs.sc.bin";
-        fragment_path = "shaders/sources/mesh_shader/essl/fs.sc.bin";
+        vertex_path = "shaders/mesh_shader/essl/vs.sc.bin";
+        fragment_path = "shaders/mesh_shader/essl/fs.sc.bin";
         break;
     case bgfx::RendererType::Vulkan:
         TB_CORE_INFO("VULKAN");
-        vertex_path = "shaders/sources/mesh_shader/spv/vs.sc.bin";
-        fragment_path = "shaders/sources/mesh_shader/spv/fs.sc.bin";
+        vertex_path = "shaders/mesh_shader/spv/vs.sc.bin";
+        fragment_path = "shaders/mesh_shader/spv/fs.sc.bin";
         break;
     default:
         break;
@@ -207,7 +207,7 @@ void Base::OnUpdate()
     OnOverlayRender();
 
     m_GeometryViewSpecification = {
-        0, { m_RenderTarget }, m_DepthBuffer, m_ViewportSize, { 0, 0 }, { 30, 30, 30, 255 }
+        0, { m_RenderTarget }, m_DepthBuffer, m_ViewportSize, { 0, 0 }, { 60, 60, 60, 255 }
     };
 
     Tabby::Renderer::SetViewTarget(m_GeometryViewSpecification);
@@ -224,18 +224,52 @@ void Base::OnUpdate()
         Tabby::Renderer::SetViewMatrix(m_GeometryViewSpecification.view_id, view, proj);
     }
 
-    for (uint32_t yy = 0; yy < 11; ++yy) {
-        for (uint32_t xx = 0; xx < 11; ++xx) {
+    // for (uint32_t yy = 0; yy < 11; ++yy) {
+    //     for (uint32_t xx = 0; xx < 11; ++xx) {
+    //
+    //         Tabby::Matrix4 transform = Tabby::Matrix4(1);
+    //         transform = glm::translate(transform, { 0.0f, 5.0f, 0.0f });
+    //         transform = glm::rotate(transform, time * glm::radians(10.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+    //
+    //         // Set model matrix for rendering.
+    //         m_Mesh->SetTransform(transform);
+    //         Tabby::Renderer::DrawMesh(0, m_Mesh);
+    //     }
+    // }
 
-            Tabby::Matrix4 transform = Tabby::Matrix4(1);
-            transform = glm::translate(transform, { 0.0f, 5.0f, 0.0f });
-            transform = glm::rotate(transform, time * glm::radians(10.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+    Tabby::Renderer::Begin2D(0);
 
-            // Set model matrix for rendering.
-            m_Mesh->SetTransform(transform);
-            Tabby::Renderer::DrawMesh(0, m_Mesh);
-        }
-    }
+    // for (uint32_t yy = 0; yy < 11; ++yy) {
+    //     for (uint32_t xx = 0; xx < 11; ++xx) {
+    //
+    //         Tabby::Matrix4 transform = Tabby::Matrix4(1);
+    //         transform = glm::translate(transform, { xx - 5.0f, yy - 5.0f, 0.0f });
+    //         transform = glm::rotate(transform, time * glm::radians(30.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+    //
+    //         Tabby::Renderer::DrawQuad(transform, nullptr, { 1.0, 1.0f, 1.0f, 1.0f }, 1.0, 1, 1, 1, 1);
+    //     }
+    // }
+
+    Tabby::Matrix4 transform = Tabby::Matrix4(1);
+    transform = glm::translate(transform, { 0.0f, 5.0f, 0.0f });
+    transform = glm::rotate(transform, time * glm::radians(30.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+    Tabby::Renderer::DrawQuad(transform, m_Image, { 1.0, 1.0f, 1.0f, 1.0f }, 1.0, 2, 0, 2, 0);
+
+    transform = glm::translate(transform, { 2.0f, 0.0f, 0.0f });
+    Tabby::Renderer::DrawQuad(transform, nullptr, { 1.0, 1.0f, 1.0f, 1.0f }, 1.0, 1, 0, 1, 0);
+
+    transform = glm::translate(transform, { -4.0f, 0.0f, 0.0f });
+    Tabby::Renderer::DrawQuad(transform, nullptr, { 1.0, 1.0f, 1.0f, 1.0f }, 1.0, 1, 0, 1, 0);
+
+    Tabby::Matrix4 transform_mesh = Tabby::Matrix4(1);
+    transform_mesh = glm::translate(transform_mesh, { 0.0f, 5.0f, 0.0f });
+    transform_mesh = glm::scale(transform_mesh, { 0.1f, 0.1f, 0.1f });
+    transform_mesh = glm::rotate(transform_mesh, time * glm::radians(10.0f), glm::vec3(0.0f, 0.5f, 1.0f));
+
+    // Set model matrix for rendering.
+    m_Mesh->SetTransform(transform_mesh);
+    Tabby::Renderer::DrawMesh(0, m_Mesh);
+    Tabby::Renderer::End2D();
 
     fps = 1.0f / Tabby::Time::GetDeltaTime();
     TB_INFO("FPS: {0} \n\t\tDeltaTime: {1}", fps, Tabby::Time::GetDeltaTime());

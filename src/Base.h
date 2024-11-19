@@ -29,6 +29,8 @@ private:
     Tabby::Shared<Tabby::Image> m_RenderTarget;
     Tabby::Shared<Tabby::Image> m_DepthBuffer;
 
+    Tabby::Shared<Tabby::Image> m_Image;
+
     Tabby::Shared<Tabby::Mesh> m_Mesh;
     bgfx::ProgramHandle m_ProgramHandle;
 

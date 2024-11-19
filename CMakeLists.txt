@@ -28,9 +28,6 @@ set(PROJECT_SRC_DIR "src")
 set(PROJECT_VENDOR_DIR "vendor")
 set(PROJECT_ASSETS_DIR "${CMAKE_CURRENT_LIST_DIR}/assets")
 
-macro(append_linker_flags FLAGS)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
-endmacro()
 ###################################################################
 # Target sources and create executable
 ###################################################################
@@ -76,23 +73,14 @@ endif()
 
 add_dependencies(${PROJECT_NAME} copy_assets_client)
 
-get_filename_component(<out-var> assets/shaders/sources/mesh_shader REALPATH BASE_DIR "")
 
 tabby_compile_shader(
     TYPE VERTEX
-    SHADERS assets/shaders/sources/mesh_shader/vs.sc
-    VARYING_DEF assets/shaders/sources/mesh_shader/varying.def.sc
-    OUTPUT_DIR assets/shaders/sources/mesh_shader
+    SHADERS assets/shaders/mesh_shader/vs.sc
+    VARYING_DEF assets/shaders/mesh_shader/varying.def.sc
+    OUTPUT_DIR assets/shaders/mesh_shader
     OUT_FILES_VAR GENERATED_SHADER_OUTPUTS
-    INCLUDE_DIRS assets/shaders/sources/common.sh
+    INCLUDE_DIRS assets/shaders/common.sh
     AS_HEADERS FALSE
 )
 
-tabby_compile_shader(
-    TYPE FRAGMENT  
-    SHADERS assets/shaders/sources/mesh_shader/fs.sc
-    VARYING_DEF assets/shaders/sources/mesh_shader/varying.def.sc
-    OUTPUT_DIR assets/shaders/sources/mesh_shader
-    OUT_FILES_VAR GENERATED_SHADER_OUTPUTS
-    INCLUDE_DIRS assets/shaders/sources/common.sh
-)
